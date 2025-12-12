@@ -1,9 +1,9 @@
 # Nebulock Project
 
 
-This project contains an agent that assists in research on building codes violations in Chicago, using the Chicago Open Data Portal. The user submits a plain language query about the building codes violations for a particular address, with or without date range filtering, and the agent uses tools to identify the violations and research for further details if appropriate.
+This project contains an agent that assists in research on building codes violations, building permits, and health inspections for food service in Chicago, using the Chicago Open Data Portal. The user submits a plain language query for a particular address, with or without date range filtering, and the agent uses tools to identify the relevant records, and research for further details if appropriate.
 
-For best results, include the cardinal direction (N,S,E,W) and the street type (Blvd, Ave, etc). Dates are not required, although some violations go back many years in this dataset. Also, you can add filtering language such as "currently open" or "related to plumbing" etc and the agent will look at the violation details and inspector notes to try and accommodate.
+For best results, include the cardinal direction (N,S,E,W) and the street type (Blvd, Ave, etc). Dates are not required, although some records go back many years in this dataset. Also, you can add filtering language such as "violations currently open" or "permits related to plumbing" etc and the agent will look at the details and inspector notes to try and accommodate.
 
 ## To run a query
 Install `uv` if you haven't already. 
@@ -22,7 +22,7 @@ There are two testing structures in this repo.
 * The second is LLM-as-a-judge evals, using DeepEval. There is one eval that tests correct tool calling, and one that checks for accuracy in the response to a test case. 
 
 ## Notes
-The agent does occasionally make mistakes, such as mis-counting the number of violations listed, because LLMs are not by nature equipped for arithmetic. For a production-ready project a separate tool to assist in counting and analysis of the violations would be constructed, to prevent the LLM from attempting to do such calculations itself. 
+The agent does occasionally make mistakes, such as mis-counting the number of records listed, because LLMs are not by nature equipped for arithmetic. For a production-ready project a separate tool to assist in counting and analysis of the records would be constructed, to prevent the LLM from attempting to do such calculations itself. 
 
 In addition, the API that this agent is using could offer a very wide variety of additional filtering options, but for a small demo such as this I've limited to street address and date.
 

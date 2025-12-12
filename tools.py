@@ -8,19 +8,18 @@ YOUR_APP_TOKEN = os.getenv("YOUR_APP_TOKEN")
 
 
 def search_address_violations(
-    address: str, start_date: str = None, end_date: str = None, days: int = None
+    address: str, start_date: str = None, end_date: str = None
 ) -> str:
     """Search for building code violations at a specific address with optional date filtering.
-    Returns inspection numbers and dates.
+    Returns violation numbers and dates.
 
     Args:
         address: The building address in all-caps format (e.g., '1601 W CHICAGO AVE')
         start_date: Optional start date in YYYY-MM-DD format (e.g., '2024-01-01')
         end_date: Optional end date in YYYY-MM-DD format (e.g., '2024-12-31')
-        days: Optional number of days to look back (e.g., 30 for last 30 days)
 
     Returns:
-        A text summary including: violation count, inspection numbers, dates, and violation types
+        A text summary including: violation numbers, dates, and status
     """
     # Build where clause with date filtering if provided
     where_clause = f"address='{address}'"
@@ -96,5 +95,103 @@ def get_violation_details(violation_id_number: str) -> str:
             return details
         else:
             return f"Error: {response.status_code}"
+    except Exception as e:
+        return f"Error: {e}"
+
+
+def get_active_building_permits(house_number:str, cardinal_direction: str, street: str) -> str:
+    """Search for active building permits issued for a specific address.
+    Returns permit details.
+
+    Args:
+        house_number: The number of the house or building on that street (e.g., "123")
+        cardinal_direction: The direction of the street, single character, in all caps format. One of N, S, E, or W.
+        street: The street name in all-caps format (e.g., 'MAIN ST')
+       
+    Returns:
+        A text summary including: permit number, status
+    """
+    
+    # Build where clause with date filtering if provided
+    where_clause = f"street_name='{street}' AND street_number='{house_number}' AND street_direction='{cardinal_direction}'"
+    print(f"Retrieving active permits for address {house_number} {cardinal_direction} {street}")
+
+    url = f"https://data.cityofchicago.org/resource/ydr8-5enu.json?$where={where_clause}&$$app_token={YOUR_APP_TOKEN}"
+    try:
+        response = requests.get(url)
+        if response.status_code == 200:
+            permits = response.json()
+            active_permits = [
+                x for x in permits if x.get("permit_status") == "ACTIVE"
+            ]
+
+            if not active_permits:
+                return f"No active permits found for {house_number} {cardinal_direction} {street}."
+
+            # Format as string summary to make it easier for the LLM to understand
+            summary = f"Found {len(active_permits)} active permit(s) issued for {house_number} {cardinal_direction} {street}:\n\n"
+            for v in active_permits:
+                summary += f"- Permit #{v.get('permit#', 'N/A')}\n"
+                summary += f"  Permit Type: {v.get('permit_type', 'N/A')}"
+                summary += f"  Date: {v.get('issue_date', 'Unknown')}\n"
+                summary += f"  Work Description: {v.get('work_description', 'Unknown')}\n"
+                summary += f"  Issued To: {v.get('contact_1_name', 'Unknown')}\n"
+
+            return summary
+        else:
+            return f"Error retrieving data: {response.status_code}"
+    except Exception as e:
+        return f"Error: {e}"
+    
+    
+def get_food_inspections(name: str = None, address: str = None, start_date: str = None, end_date: str = None
+) -> str:
+    """Search for any results of recent health department inspections of restaurants by address or name.
+
+    Args:
+        address: optional, The building address in all-caps format (e.g., '1601 W CHICAGO AVE')
+        name: optional, the business name
+        start_date: Optional start date in YYYY-MM-DD format (e.g., '2024-01-01')
+        end_date: Optional end date in YYYY-MM-DD format (e.g., '2024-12-31')
+
+    Returns:
+        A text summary including: details and date.
+    """
+    
+    if not address and not name:
+        raise Exception("Either name or address is necessary to find a restaurant")
+    address_or_name = " ".join(filter(None, [name, address]))
+    
+    where_clause = " AND ".join(filter(None, [
+        f"dba_name='{name}'" if name else None,
+        f"address='{address}'" if address else None
+    ]))
+    if start_date and end_date:
+        where_clause += f" AND inspection_date between '{start_date}T00:00:00' and '{end_date}T23:59:59'"
+        print(f"Date range: {start_date} - {end_date}")
+    elif start_date:
+        end_date = datetime.now().strftime("%Y-%m-%d")
+        where_clause += f" AND inspection_date between '{start_date}T00:00:00' and '{end_date}T23:59:59'"
+        print(f"Date range: {start_date} - {end_date}")
+    
+    url = f"https://data.cityofchicago.org/resource/4ijn-s7e5.json?$where={where_clause}&$$app_token={YOUR_APP_TOKEN}"
+    try:
+        response = requests.get(url)
+        if response.status_code == 200:
+            inspections = response.json()
+
+            # Format as string summary to make it easier for the LLM to understand
+            summary = f"Found {len(inspections)} inspections for {address_or_name}:\n\n"
+            for v in inspections:
+                summary += f"  Business name: {v.get('dba_name', 'Unknown')}\n"
+                summary += f"  Business address: {v.get('address', 'Unknown')}\n"
+                summary += f"  Results: {v.get('results', 'Unknown')}\n"
+                summary += f"  Date: {v.get('inspection_date', 'Unknown')}\n"
+                summary += f"  Violation: {v.get('violations', 'Unknown')}\n"
+                summary += f"  Risk Level: {v.get('risk', 'Unknown')}\n"
+
+            return summary
+        else:
+            return f"Error retrieving data: {response.status_code}"
     except Exception as e:
         return f"Error: {e}"
