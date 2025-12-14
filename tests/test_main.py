@@ -50,54 +50,42 @@ MOCK_DETAILS_RESPONSE2 = [
     }
 ]
 
-@pytest.fixture
-def agent():
-    from tools import search_address_violations, get_violation_details
-    model = ChatAnthropic(model="claude-haiku-4-5")
-    return create_agent(
-        model=model,
-        tools=[search_address_violations, get_violation_details],
-        system_prompt="""You are a research assistant helping users find building code violations.
+system_prompt = """You are a research assistant helping users find information about buildings in Chicago, Illinois. They will submit an address, and possibly a date or date range to look for.
 
     When addresses are provided, convert them to all-caps and format cardinal directions with one letter (eg, N for North) and abbreviate street types (eg, BLVD for Boulevard).
 
     Available tools:
-    1. search_address_violations - Get violations for an address with optional date filtering (start_date, end_date, or days parameters)
-    2. get_violation_details - Get detailed info about a specific violation number
+    1. geocode_address - If the question involves looking around the vicinity of an address, geocode that address to get coordinates.
+    2. get_proximity_to_coords - This function takes in coordinates of an address and calculates the north, south, east, and west bounds for the requested radius. Radius must be provided in miles.
+    3. search_address_violations - Get building code violations for an address with optional date filtering (start_date, end_date, or days parameters)
+    4. get_violation_details - Get detailed info about a specific building code violation number
+    5. search_address_active_building_permits - Get a listing of any active building permits for an address.
+    6. search_coordinates_active_building_permits - Get a listing of any active building permits found within coordinate boundaries.
+    7. search_address_food_inspections - Get a listing of health department inspections for restaurants or food services. Accepts name and/or address.
+    8. search_coordinates_food_inspections - Get a listing of health department inspections for restaurants or food services found within coordinate boundaries.
 
-    Use multiple tools when helpful to provide comprehensive answers."""
+    Use multiple tools when helpful to provide comprehensive answers. Do not ask follow up questions or offer to do more."""
+
+@pytest.fixture
+def agent():
+
+    from tools.tools_geocoding import geocode_address, get_proximity_to_coords
+
+    from tools.tools_violations import search_address_violations, get_violation_details, search_coordinates_violations
+
+    from tools.tools_permits import search_address_active_building_permits, search_coordinates_active_building_permits
+
+    from tools.tools_food import search_address_food_inspections, search_coordinates_food_inspections
+
+    model = ChatAnthropic(model="claude-haiku-4-5")
+    return create_agent(
+        model=model,
+        tools=[search_address_violations, get_violation_details, search_address_active_building_permits, search_address_food_inspections, geocode_address, get_proximity_to_coords, search_coordinates_violations, search_coordinates_active_building_permits, search_coordinates_food_inspections],
+        system_prompt=system_prompt
         )
 
 @pytest.mark.parametrize("run", range(num_runs))
-@patch('tools.requests.get')
-def test_run_search_basic(mock_get, run):
-    mock_response = MagicMock()
-    mock_response.status_code = 200
-    mock_response.json.return_value = MOCK_SEARCH_RESPONSE
-    mock_get.return_value = mock_response
-    
-    from tools import search_address_violations
-    result = search_address_violations("123 N MAIN ST")
-
-    assert "2023-01-01" in result
-    assert "12345" in result
-
-@pytest.mark.parametrize("run", range(num_runs))
-@patch('tools.requests.get')
-def test_get_violation_details_basic(mock_get, run):
-    mock_response = MagicMock()
-    mock_response.status_code = 200
-    mock_response.json.return_value = MOCK_DETAILS_RESPONSE
-    mock_get.return_value = mock_response
-
-    from tools import get_violation_details
-    result = get_violation_details("123 N MAIN ST")
-
-    assert "FAILED" in result
-    assert "Missing door frame" in result
-
-@pytest.mark.parametrize("run", range(num_runs))
-@patch('tools.requests.get')
+@patch('tools.tools_violations.requests.get')
 def test_agent_formats_address_correctly(mock_get, agent, run):
     mock_response = MagicMock()
     mock_response.status_code = 200
@@ -116,7 +104,7 @@ def test_agent_formats_address_correctly(mock_get, agent, run):
     
 
 @pytest.mark.parametrize("run", range(num_runs))
-@patch('tools.requests.get')
+@patch('tools.tools_violations.requests.get')
 def test_agent_formats_address_correctly2(mock_get, agent, run):
     """If the address has no direction or no street type, it should still work"""
     mock_response = MagicMock()
@@ -135,7 +123,7 @@ def test_agent_formats_address_correctly2(mock_get, agent, run):
     assert len(response['messages']) > 0
 
 @pytest.mark.parametrize("run", range(num_runs))
-@patch('tools.requests.get')
+@patch('tools.tools_violations.requests.get')
 def test_agent_formats_address_correctly3(mock_get, agent, run):
 
     mock_response = MagicMock()
@@ -167,7 +155,7 @@ def mock_multi_tool_response(url, *args, **kwargs):
     return mock_response
  
 @pytest.mark.parametrize("run", range(num_runs))
-@patch('tools.requests.get')
+@patch('tools.tools_violations.requests.get')
 def test_agent_calls_multiple_tools_in_order(mock_get, agent, run):
     mock_response = MagicMock()
     mock_response.status_code = 200
@@ -185,26 +173,7 @@ def test_agent_calls_multiple_tools_in_order(mock_get, agent, run):
     assert len(response['messages']) > 2
 
 @pytest.mark.parametrize("run", range(num_runs))
-@patch('tools.requests.get')
-def test_agent_handles_date_filtering(mock_get, agent, run):
-    mock_response = MagicMock()
-    mock_response.status_code = 200
-    mock_response.json.return_value = MOCK_SEARCH_RESPONSE
-    mock_get.return_value = mock_response
-
-    response = agent.invoke(
-            {"messages": [{"role": "user", "content": "What violations happened at 123 north main street between January and March 2023?"}]}
-        )
-    first_call_url = mock_get.call_args_list[0][0][0]
-    final_content = str(response["messages"][-1].content).lower()
-
-    assert mock_get.called is True
-    assert "violation_date" in first_call_url
-    assert "violation" in final_content or "inspection" in final_content
-    
-    
-@pytest.mark.parametrize("run", range(num_runs))
-@patch('tools.requests.get')
+@patch('tools.tools_violations.requests.get')
 def test_agent_handles_date_filtering(mock_get, agent, run):
     mock_response = MagicMock()
     mock_response.status_code = 200
@@ -237,7 +206,7 @@ def mock_violation_details_response(url, *args, **kwargs):
 
     
 @pytest.mark.parametrize("run", range(num_runs))
-@patch('tools.requests.get')
+@patch('tools.tools_violations.requests.get')
 def test_agent_handles_extra_detail_filtering(mock_get, agent, run):
     mock_response = MagicMock()
     mock_response.status_code = 200

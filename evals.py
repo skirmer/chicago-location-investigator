@@ -39,7 +39,7 @@ class AnthropicDeepEvalLLM(DeepEvalBaseLLM):
 
 
 # Create the model instance
-model = AnthropicDeepEvalLLM("claude-haiku-4-5")
+model = AnthropicDeepEvalLLM("claude-haiku-4-5", temperature=0)
 
 correct_tool_metric = ToolCorrectnessMetric(model=model)
 
