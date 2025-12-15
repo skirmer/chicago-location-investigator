@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from langchain.tools import tool
 
 load_dotenv()
-YOUR_APP_TOKEN = os.getenv("YOUR_APP_TOKEN")
+OPEN_DATA_APP_TOKEN = os.getenv("OPEN_DATA_APP_TOKEN")
 
 def search_address_food_inspections(name: str = None, address: str = None, coordinate_boundaries: dict=None, start_date: str = None, end_date: str = None
 ) -> str:
@@ -43,7 +43,7 @@ def search_address_food_inspections(name: str = None, address: str = None, coord
         where_clause += f" AND inspection_date between '{start_date}T00:00:00' and '{end_date}T23:59:59'"
         print(f"Date range: {start_date} - {end_date}")
     
-    url = f"https://data.cityofchicago.org/resource/4ijn-s7e5.json?$where={where_clause}&$$app_token={YOUR_APP_TOKEN}"
+    url = f"https://data.cityofchicago.org/resource/4ijn-s7e5.json?$where={where_clause}&$$app_token={OPEN_DATA_APP_TOKEN}"
     try:
         response = requests.get(url)
         if response.status_code == 200:
@@ -92,7 +92,7 @@ def search_coordinates_food_inspections(coordinate_boundaries: dict, start_date:
         where_clause += f" AND inspection_date between '{start_date}T00:00:00' and '{end_date}T23:59:59'"
         print(f"Date range: {start_date} - {end_date}")
     
-    url = f"https://data.cityofchicago.org/resource/4ijn-s7e5.json?$where={where_clause}&$$app_token={YOUR_APP_TOKEN}"
+    url = f"https://data.cityofchicago.org/resource/4ijn-s7e5.json?$where={where_clause}&$$app_token={OPEN_DATA_APP_TOKEN}"
     try:
         response = requests.get(url)
         if response.status_code == 200:

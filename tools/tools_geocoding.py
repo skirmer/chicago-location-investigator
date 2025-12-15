@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
-YOUR_APP_TOKEN = os.getenv("YOUR_APP_TOKEN")
+OPEN_DATA_APP_TOKEN = os.getenv("OPEN_DATA_APP_TOKEN")
 
 from geopy.geocoders import Nominatim
 import math
@@ -22,7 +22,7 @@ def geocode_address(address:str):
         Latitude, Longitude as tuple
     """
 
-    app = Nominatim(user_agent="chicago_buildings")
+    app = Nominatim(user_agent="chicago_location_investigator")
     
     max_retries = 3
     retry_delay = 4  # seconds

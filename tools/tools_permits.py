@@ -5,7 +5,7 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
-YOUR_APP_TOKEN = os.getenv("YOUR_APP_TOKEN")
+OPEN_DATA_APP_TOKEN = os.getenv("OPEN_DATA_APP_TOKEN")
 
 
 def search_address_active_building_permits(house_number:str, cardinal_direction: str, street: str) -> str:
@@ -25,7 +25,7 @@ def search_address_active_building_permits(house_number:str, cardinal_direction:
     where_clause = f"street_name='{street}' AND street_number='{house_number}' AND street_direction='{cardinal_direction}'"
     print(f"Retrieving active permits for address {house_number} {cardinal_direction} {street}")
 
-    url = f"https://data.cityofchicago.org/resource/ydr8-5enu.json?$where={where_clause}&$$app_token={YOUR_APP_TOKEN}"
+    url = f"https://data.cityofchicago.org/resource/ydr8-5enu.json?$where={where_clause}&$$app_token={OPEN_DATA_APP_TOKEN}"
     try:
         response = requests.get(url)
         if response.status_code == 200:
@@ -74,7 +74,7 @@ def search_coordinates_active_building_permits(coordinate_boundaries:dict) -> st
 
     print(f"Retrieving active permits within {coordinate_boundaries}")
 
-    url = f"https://data.cityofchicago.org/resource/ydr8-5enu.json?$where={where_clause}&$$app_token={YOUR_APP_TOKEN}"
+    url = f"https://data.cityofchicago.org/resource/ydr8-5enu.json?$where={where_clause}&$$app_token={OPEN_DATA_APP_TOKEN}"
     try:
         response = requests.get(url)
         if response.status_code == 200:

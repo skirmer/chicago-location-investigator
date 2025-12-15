@@ -5,7 +5,7 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
-YOUR_APP_TOKEN = os.getenv("YOUR_APP_TOKEN")
+OPEN_DATA_APP_TOKEN = os.getenv("OPEN_DATA_APP_TOKEN")
 
 def search_coordinates_violations(coordinate_boundaries:dict, start_date:str = None,  end_date: str = None):
     """Search for building code violations within the bounds of a set of geocoordinates (north, south, east, and west) with optional date filtering.
@@ -33,7 +33,7 @@ def search_coordinates_violations(coordinate_boundaries:dict, start_date:str = N
         where_clause += f" AND violation_date between '{start_date}T00:00:00' and '{end_date}T23:59:59'"
         print(f"Date range: {start_date} - {end_date}")
 
-    url = f"https://data.cityofchicago.org/resource/22u3-xenr.json?$where={where_clause}&$$app_token={YOUR_APP_TOKEN}"
+    url = f"https://data.cityofchicago.org/resource/22u3-xenr.json?$where={where_clause}&$$app_token={OPEN_DATA_APP_TOKEN}"
 
     print(url)
     try:
@@ -92,7 +92,7 @@ def search_address_violations(
         where_clause += f" AND violation_date between '{start_date}T00:00:00' and '{end_date}T23:59:59'"
         print(f"Date range: {start_date} - {end_date}")
 
-    url = f"https://data.cityofchicago.org/resource/22u3-xenr.json?$where={where_clause}&$$app_token={YOUR_APP_TOKEN}"
+    url = f"https://data.cityofchicago.org/resource/22u3-xenr.json?$where={where_clause}&$$app_token={OPEN_DATA_APP_TOKEN}"
 
     try:
         response = requests.get(url)
@@ -131,7 +131,7 @@ def get_violation_details(violation_id_number: str) -> str:
     Returns:
         Detailed information about the specific violation including description and inspector notes
     """
-    url = f"https://data.cityofchicago.org/resource/22u3-xenr.json?id={violation_id_number}&$$app_token={YOUR_APP_TOKEN}"
+    url = f"https://data.cityofchicago.org/resource/22u3-xenr.json?id={violation_id_number}&$$app_token={OPEN_DATA_APP_TOKEN}"
 
     print(f"Retrieving details for violation #{violation_id_number}")
 
