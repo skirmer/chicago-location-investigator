@@ -1,7 +1,7 @@
 # Chicago Location Investigator Project
 
 
-This project contains an agent that assists in research on building codes violations, building permits, and health inspections for food service in Chicago, using the Chicago Open Data Portal. The user submits a plain language query for a particular address, with or without date range filtering, and the agent uses tools to identify the relevant records, and research for further details if appropriate.
+This project contains a generative AI agent that assists in research on building codes violations, building permits, and health inspections for food service in Chicago, using the Chicago Open Data Portal. The user submits a plain language query for a particular address, with or without date range filtering, and the agent uses tools to identify the relevant records, and research for further details if appropriate.
 
 The agent has a limited capability to search Chicago Open Data Portal APIs currently, but new functionalities will be added. PRs to add tools for more APIs are welcome, please contribute a function for your favorite dataset about Chicago locations, businesses, and buildings.
 
