@@ -119,44 +119,59 @@ class RunTestCase:
 
 if __name__ == "__main__":
     test_cases = [
-        # {
-        #     "prompt": "What building code violations have been recorded for 1601 West Chicago Avenue since June 2025? Describe what they were for, and indicate how long they have been open.",
-        #     "expected_output": "There are 9 violations recorded at this location on September 8, 2025. They were for structural issues, including exterior repair, interior wall and ceiling issues, fire escape, and more. They have been open since the day they were recorded, for more than three months so far.",
-        #     "expected_tool_names": [
-        #         "search_address_violations",
-        #         "get_violation_details",
-        #     ],
-        # },
-        # {
-        #     "prompt": "There's a restaurant named Puffy Cakes, I don't know the address. Has that restaurant failed a health inspection since November 1, 2025?",
-        #     "expected_output": "Yes, Puffy Cakes has failed at least one health inspection since November 1, 2025.",
-        #     "expected_tool_names": [
-        #         "search_address_food_inspections",
-        #     ],
-        # },
-        # {
-        #     "prompt": "What are the addresses with active building permits within .1 mile of 1601 west chicago ave?",
-        #     "expected_output": "1636 W CHICAGO AVE, 1622 W HURON ST, 1512 W HURON ST, 1615 W SUPERIOR ST, 1533 W FRY ST, 1518 W CHICAGO AVE, 1514 W SUPERIOR ST",
-        #     "expected_tool_names": [
-        #         "geocode_address","get_proximity_to_coords","search_coordinates_active_building_permits"
-        #     ],
-        # },
+        # Test two-step on just building codes
+        {
+            "prompt": "What building code violations have been recorded for 1601 West Chicago Avenue since June 2025? Describe what they were for, and indicate how long they have been open.",
+            "expected_output": "There are 9 violations recorded at this location on September 8, 2025. They were for structural issues, including exterior repair, interior wall and ceiling issues, fire escape, and more. They have been open since the day they were recorded, for more than three months so far.",
+            "expected_tool_names": [
+                "search_address_violations",
+                "get_violation_details",
+            ],
+        },
+        # Test single step on food
+        {
+            "prompt": "There's a restaurant named Puffy Cakes, I don't know the address. Has that restaurant failed a health inspection since November 1, 2025?",
+            "expected_output": "Yes, Puffy Cakes has failed at least one health inspection since November 1, 2025.",
+            "expected_tool_names": [
+                "search_address_food_inspections",
+            ],
+        },
+        # Test multi step with geocoding and building permits
+        {
+            "prompt": "What are the addresses with active building permits within .1 mile of 1601 west chicago ave?",
+            "expected_output": "1636 W CHICAGO AVE, 1622 W HURON ST, 1512 W HURON ST, 1615 W SUPERIOR ST, 1533 W FRY ST, 1518 W CHICAGO AVE, 1514 W SUPERIOR ST",
+            "expected_tool_names": [
+                "geocode_address","get_proximity_to_coords","search_coordinates_active_building_permits"
+            ],
+        },
+        # Test restaurants multi step with geocoding and deeper logic
         {
             "prompt": "Suggest two restaurants within .25 mile of 1751 West Augusta blvd that have passed their health inspections since November 1, 2025",
             "expected_output": "Koko's Mediterranean Grill and Beatnik & Goodfunk are both possibilities. Puffy Cakes should not be recommended.",
             "expected_tool_names": [
-                "geocode_address","get_proximity_to_coords","search_coordinates_food_inspections"
+                "geocode_address",
+                "get_proximity_to_coords",
+                "search_coordinates_food_inspections",
             ],
         },
-
-
+        # Test multi step geocoding with building permits and violations combined logic
+        {
+            "prompt": "Find all the building code violations from 2025 within .1 mile of 1751 West Augusta Blvd, and check and see if any of the addresses have active building permits. Tell me what the violations are, and list the building permits so I can see if the permits might be remediating the violations.",
+            "expected_output": "1002 N Wood St has several open building code violations, and there are several building permits in the area, but none of the permits are for 1002 N Wood Street.",
+            "expected_tool_names": [
+                "geocode_address",
+                "get_proximity_to_coords",
+                "search_coordinates_active_building_permits",
+                "search_coordinates_violations"
+            ],
+        },
     ]
 
     metrics = create_metrics()
 
     for i in test_cases:
         evaluation = RunTestCase().evaluate(
-            i['prompt'], i['expected_output'], i['expected_tool_names']
+            i["prompt"], i["expected_output"], i["expected_tool_names"]
         )
 
     # print(evaluation)

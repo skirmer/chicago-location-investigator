@@ -52,7 +52,8 @@ if __name__ == "__main__":
     if args.query:
         query_text = args.query
     else:
-        query_text = "Suggest two restaurants within .25 mile of 1751 West Augusta blvd that have not failed a health inspection since November 1, 2025"
+        query_text = "Find all the building code violations from 2025 within .1 mile of 1751 West Augusta Blvd, and check and see if any of the addresses have active building permits. Tell me what the violations are, and list the building permits so I can see if the permits might be remediating the violations."
+        # query_text = "Suggest two restaurants within .25 mile of 1751 West Augusta blvd that have not failed a health inspection since November 1, 2025"
         # query_text = "What building code violations have been recorded for 1601 West Chicago Avenue since June 2025? Describe what they were for, and indicate how long they have been open."
 
 

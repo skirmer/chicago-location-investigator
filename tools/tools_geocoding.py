@@ -10,7 +10,7 @@ import time
 from geopy.exc import GeocoderTimedOut, GeocoderUnavailable
 import functools
 
-@functools.lru_cache(maxsize=1000)
+@functools.lru_cache(maxsize=100)
 def geocode_address(address:str):
     """Provide an address including city and state, and this function will return geocoordinates for this location.
     This is rate limited as the geocoding API is free, so don't send more than 1 request per second.
@@ -29,6 +29,7 @@ def geocode_address(address:str):
     
     for attempt in range(max_retries):
         try:
+            print(f"Geocoding location {address}")
             location = app.geocode(address).raw
             return (float(location['lat']), float(location['lon']))
         except (GeocoderTimedOut, GeocoderUnavailable):
@@ -36,7 +37,7 @@ def geocode_address(address:str):
                 time.sleep(retry_delay)
                 retry_delay *= 2 
             else:
-                raise Exception("Rate limit for Open Street Maps has been reached- back off for a while.")
+                raise 
         except Exception as e:
             raise e
 
