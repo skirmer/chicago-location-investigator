@@ -60,7 +60,7 @@ def search_address_food_inspections(name: str = None, address: str = None, coord
                 summary += f"  Risk Level: {v.get('risk', 'Unknown')}\n"
 
             if len(summary) > 10000:
-                return summary[:10000] + "This query returned a huge amount of data, so it's probably incomplete - let the user know."
+                return summary[:10000] + "\n This query returned a huge amount of data and had to be truncated, so it's probably incomplete."
 
             else:
                 return summary
@@ -109,7 +109,7 @@ def search_coordinates_food_inspections(coordinate_boundaries: dict, start_date:
                 summary += f"  Risk Level: {v.get('risk', 'Unknown')}\n"
 
             if len(summary) > 10000:
-                return summary[:10000] + "\n This query returned a huge amount of data aand had to be truncated, so it's probably incomplete."
+                return summary[:10000] + "\n This query returned a huge amount of data and had to be truncated, so it's probably incomplete."
 
             else:
                 return summary

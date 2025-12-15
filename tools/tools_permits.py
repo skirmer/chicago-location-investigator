@@ -30,6 +30,7 @@ def search_address_active_building_permits(house_number:str, cardinal_direction:
         response = requests.get(url)
         if response.status_code == 200:
             permits = response.json()
+
             active_permits = [
                 x for x in permits if x.get("permit_status") == "ACTIVE"
             ]
@@ -44,7 +45,7 @@ def search_address_active_building_permits(house_number:str, cardinal_direction:
                 summary += f"  Permit Type: {v.get('permit_type', 'N/A')}"
                 summary += f"  Date: {v.get('issue_date', 'Unknown')}\n"
                 summary += f"  Work Description: {v.get('work_description', 'Unknown')}\n"
-                summary += f"  Issued To: {v.get('contact_1_name', 'Unknown')}\n"
+                summary += f"  Issued To: {v.get('contact_1_name', 'Unknown')}\n\n"
 
             if len(summary) > 10000:
                 return summary[:10000] + "\n This query returned a huge amount of data aand had to be truncated, so it's probably incomplete."
@@ -88,15 +89,15 @@ def search_coordinates_active_building_permits(coordinate_boundaries:dict) -> st
             # Format as string summary to make it easier for the LLM to understand
             summary = f"Found {len(active_permits)} active permit(s) issued in {coordinate_boundaries}:\n\n"
             for v in active_permits:
-                summary += f"- Permit #{v.get('permit#', 'N/A')}\n"
+                summary += f"- Permit #{v.get('permit_', 'N/A')}\n"
                 summary += f"  Permit Type: {v.get('permit_type', 'N/A')}"
                 summary += f"  Date: {v.get('issue_date', 'Unknown')}\n"
                 summary += f"  Work Description: {v.get('work_description', 'Unknown')}\n"
                 summary += f"  Issued To: {v.get('contact_1_name', 'Unknown')}\n"
-                summary += f"  Address: {v.get('house_number')} {v.get('cardinal_direction')} {v.get('street')}"
+                summary += f"  Address: {v.get('street_number')} {v.get('street_direction')} {v.get('street_name')}\n\n"
 
             if len(summary) > 10000:
-                return summary[:10000] + "\n This query returned a huge amount of data aand had to be truncated, so it's probably incomplete."
+                return summary[:10000] + "\n This query returned a huge amount of data and had to be truncated, so it's probably incomplete."
 
             else:
                 return summary
