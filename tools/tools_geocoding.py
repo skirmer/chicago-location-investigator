@@ -6,7 +6,11 @@ YOUR_APP_TOKEN = os.getenv("YOUR_APP_TOKEN")
 
 from geopy.geocoders import Nominatim
 import math
+import time
+from geopy.exc import GeocoderTimedOut, GeocoderUnavailable
+import functools
 
+@functools.lru_cache(maxsize=1000)
 def geocode_address(address:str):
     """Provide an address including city and state, and this function will return geocoordinates for this location.
     This is rate limited as the geocoding API is free, so don't send more than 1 request per second.
@@ -18,10 +22,23 @@ def geocode_address(address:str):
         Latitude, Longitude as tuple
     """
 
-    app = Nominatim(user_agent="chicago_location_checker")
-    location = app.geocode(address).raw
-
-    return (float(location['lat']), float(location['lon']))
+    app = Nominatim(user_agent="chicago_buildings")
+    
+    max_retries = 3
+    retry_delay = 4  # seconds
+    
+    for attempt in range(max_retries):
+        try:
+            location = app.geocode(address).raw
+            return (float(location['lat']), float(location['lon']))
+        except (GeocoderTimedOut, GeocoderUnavailable):
+            if attempt < max_retries - 1:
+                time.sleep(retry_delay)
+                retry_delay *= 2 
+            else:
+                raise Exception("Rate limit for Open Street Maps has been reached- back off for a while.")
+        except Exception as e:
+            raise e
 
 def get_proximity_to_coords(coordinates: tuple, dist_in_miles: float = .5):
     """Provide a tuple of (latitude, longitude) for a location, and this returns geocoordinates within a radius.
