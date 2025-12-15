@@ -22,7 +22,6 @@ def search_coordinates_violations(coordinate_boundaries:dict, start_date:str = N
     # Build where clause with date filtering if provided
     where_clause = f"latitude%20between%20{coordinate_boundaries['south']}%20and%20{coordinate_boundaries['north']}%20AND%20longitude%20between%20{coordinate_boundaries['west']}%20and%20{coordinate_boundaries['east']}"
 
-    print(where_clause)
     print(f"Retrieving building violations within {coordinate_boundaries}")
 
     if start_date and end_date:
@@ -35,7 +34,6 @@ def search_coordinates_violations(coordinate_boundaries:dict, start_date:str = N
 
     url = f"https://data.cityofchicago.org/resource/22u3-xenr.json?$where={where_clause}&$$app_token={OPEN_DATA_APP_TOKEN}"
 
-    print(url)
     try:
         response = requests.get(url)
         if response.status_code == 200:
