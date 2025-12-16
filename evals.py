@@ -8,6 +8,19 @@ from deepeval.metrics import ToolCorrectnessMetric, GEval
 from dotenv import load_dotenv
 from deepeval.models.base_model import DeepEvalBaseLLM
 from deepeval.test_case import LLMTestCaseParams
+from main import model
+
+from tools.tools_geocoding import get_proximity_to_coords
+
+from tools.tools_violations import search_address_violations, get_violation_details, search_coordinates_violations
+
+from tools.tools_permits import search_address_active_building_permits, search_coordinates_active_building_permits
+
+from tools.tools_food import search_address_food_inspections, search_coordinates_food_inspections
+from langchain.agents import create_agent
+import json
+from datetime import datetime
+
 
 load_dotenv()
 
@@ -42,6 +55,50 @@ class AnthropicDeepEvalLLM(DeepEvalBaseLLM):
 
 def create_model():
     return AnthropicDeepEvalLLM("claude-haiku-4-5", temperature=0)
+
+def mock_geocode_address(address:str):
+    """Provide an address including city and state, and this function will return geocoordinates for this location.
+    This is rate limited as the geocoding API is free, so don't send more than 1 request per second.
+
+    Args: 
+        address: The building address in all-caps format (e.g., '1601 W CHICAGO AVE') - unless otherwise indicated, use "CHICAGO, ILLINOIS" as the city and state.
+
+    Returns: 
+        Latitude, Longitude as tuple
+    """    
+    print(address)
+
+
+    if '1601 W CHICAGO AVE' in address:
+        return (41.8958, -87.6688)
+    elif '1751 W AUGUSTA BLVD' in address:
+        return (41.8991, -87.6721)
+    elif '2951 W ARMITAGE AVE' in address:
+        return (41.917289, -87.701174)
+    else:
+        return (41.8781, -87.6298)
+
+
+agent = create_agent(
+    model=model,
+    tools=[search_address_violations, get_violation_details, search_address_active_building_permits, search_address_food_inspections, mock_geocode_address, get_proximity_to_coords, search_coordinates_violations, search_coordinates_active_building_permits, search_coordinates_food_inspections],
+    system_prompt="""You are a research assistant helping users find information about buildings in Chicago, Illinois. They will submit an address, and possibly a date or date range to look for.
+
+When addresses are provided, convert them to all-caps and format cardinal directions with one letter (eg, N for North) and abbreviate street types (eg, BLVD for Boulevard). Where restaurant names are provided, also convert them to all-caps before passing to a tool.
+
+Available tools:
+1. mock_geocode_address - If the question involves looking around the vicinity of an address, geocode that address to get coordinates.
+2. get_proximity_to_coords - This function takes in coordinates of an address and calculates the north, south, east, and west bounds for the requested radius. Radius must be provided in miles.
+3. search_address_violations - Get building code violations for an address with optional date filtering (start_date, end_date, or days parameters)
+4. get_violation_details - Get detailed info about a specific building code violation number
+5. search_address_active_building_permits - Get a listing of any active building permits for an address.
+6. search_coordinates_active_building_permits - Get a listing of any active building permits found within coordinate boundaries.
+7. search_address_food_inspections - Get a listing of health department inspections for restaurants or food services. Accepts name and/or address.
+8. search_coordinates_food_inspections - Get a listing of health department inspections for restaurants or food services found within coordinate boundaries.
+
+Use multiple tools when helpful to provide comprehensive answers. Do not ask follow up questions or offer to do more. If results had to be truncated due to length, let the user know.""",
+)
+
 
 
 def create_metrics():
@@ -141,25 +198,25 @@ if __name__ == "__main__":
             "prompt": "What are the addresses with active building permits within .1 mile of 1601 west chicago ave?",
             "expected_output": "1636 W CHICAGO AVE, 1622 W HURON ST, 1512 W HURON ST, 1615 W SUPERIOR ST, 1533 W FRY ST, 1518 W CHICAGO AVE, 1514 W SUPERIOR ST",
             "expected_tool_names": [
-                "geocode_address","get_proximity_to_coords","search_coordinates_active_building_permits"
+                "mock_geocode_address","get_proximity_to_coords","search_coordinates_active_building_permits"
             ],
         },
         # Test restaurants multi step with geocoding and deeper logic
         {
-            "prompt": "Suggest two restaurants within .25 mile of 1751 West Augusta blvd that have passed their health inspections since November 1, 2025",
-            "expected_output": "Koko's Mediterranean Grill and Beatnik & Goodfunk are both possibilities. Puffy Cakes should not be recommended.",
+            "prompt": "Suggest 2 restaurants within .25 mile of 2951 W armitage ave that have passed all of their health inspections since October 1, 2025",
+            "expected_output": "The Spice Room, Gretel, Papa John's, Bang Bang, and Buffalo Wild Wings are suitable recommendations, but the answer should select two from this list. Dante's and Parson's Chicken and Fish should not be recommended.",
             "expected_tool_names": [
-                "geocode_address",
+                "mock_geocode_address",
                 "get_proximity_to_coords",
                 "search_coordinates_food_inspections",
             ],
         },
         # Test multi step geocoding with building permits and violations combined logic
         {
-            "prompt": "Find all the building code violations from 2025 within .1 mile of 1751 West Augusta Blvd, and check and see if any of the addresses have active building permits. Tell me what the violations are, and list the building permits so I can see if the permits might be remediating the violations.",
-            "expected_output": "1002 N Wood St has several open building code violations, and there are several building permits in the area, but none of the permits are for 1002 N Wood Street.",
+            "prompt": "Find all the building code violations from 2025 within .1 mile of 2951 W armitage ave.Check and see if any of the addresses have active building permits. Tell me what the violations are, and list the building permits so I can see if the permits might be remediating the violations.",
+            "expected_output": "1918 N FRANCISCO AVE, 1926 N HUMBOLDT BLVD, 1930 N HUMBOLDT BLVD, 3013 W ARMITAGE AVE, 3004 W ARMITAGE AVE, 1908 N FRANCISCO AVE, and 3007 W ARMITAGE AVE have open building code violations, and there are several building permits in the area. Of these, there are building permits for 1908 N FRANCISCO AVE, 1918 N FRANCISCO AVE, and 3007 W ARMITAGE AVE. Some permits for 1918 N FRANCISCO, 1926 N HUMBOLDT BLVD, and 3007 W ARMITAGE seem like they might be remediating the building code violations, but 1908 N FRANCISCO is building something new.",
             "expected_tool_names": [
-                "geocode_address",
+                "mock_geocode_address",
                 "get_proximity_to_coords",
                 "search_coordinates_active_building_permits",
                 "search_coordinates_violations"
@@ -173,5 +230,33 @@ if __name__ == "__main__":
         evaluation = RunTestCase().evaluate(
             i["prompt"], i["expected_output"], i["expected_tool_names"]
         )
+        
+        # Generate timestamp and create filename
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"data/test_result{timestamp}.json"
+        
+        # Collect results for each test case
+        test_result = {
+            "timestamp": timestamp,
+            "prompt": i["prompt"],
+            "expected_output": i["expected_output"],
+            "expected_tool_names": i["expected_tool_names"],
+            "metrics": []
+        }
+        
+        # Extract metric results
+        for test_case in evaluation.test_results:
+            for metric_result in test_case.metrics_data:
+                test_result["metrics"].append({
+                    "name": metric_result.name,
+                    "score": metric_result.score,
+                    "success": metric_result.success,
+                    "reason": metric_result.reason if hasattr(metric_result, 'reason') else None
+                })
+                
+        # Write evaluation results to file
+        with open(filename, 'w') as f:
+            json.dump(test_result, f, indent=2, default=str)
 
-    # print(evaluation)
+        print(f"Results written to {filename}")
+

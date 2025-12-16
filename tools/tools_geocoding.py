@@ -8,9 +8,7 @@ from geopy.geocoders import Nominatim
 import math
 import time
 from geopy.exc import GeocoderTimedOut, GeocoderUnavailable
-import functools
 
-@functools.lru_cache(maxsize=100)
 def geocode_address(address:str):
     """Provide an address including city and state, and this function will return geocoordinates for this location.
     This is rate limited as the geocoding API is free, so don't send more than 1 request per second.

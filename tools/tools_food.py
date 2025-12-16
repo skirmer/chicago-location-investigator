@@ -69,7 +69,7 @@ def search_address_food_inspections(name: str = None, address: str = None, coord
     except Exception as e:
         return f"Error: {e}"
     
-def search_coordinates_food_inspections(coordinate_boundaries: dict, start_date: str = None, end_date: str = None
+def search_coordinates_food_inspections(coordinate_boundaries: dict, type: str=None, start_date: str = None, end_date: str = None
 ) -> str:
     """Search for any results of recent health department inspections of restaurants within the bounds of a geocoordinate range.
 
@@ -77,6 +77,7 @@ def search_coordinates_food_inspections(coordinate_boundaries: dict, start_date:
         coordinate_boundaries: The dict of the coordinate boundaries in format {"north":north_bound, "south":south_bound, "east":east_bound, "west": west_bound}
         start_date: Optional start date in YYYY-MM-DD format (e.g., '2024-01-01')
         end_date: Optional end date in YYYY-MM-DD format (e.g., '2024-12-31')
+        type: Optional, indicate the type of results desired. Options: "Fail", "Pass"
 
     Returns:
         A text summary including: details and date.
@@ -91,6 +92,10 @@ def search_coordinates_food_inspections(coordinate_boundaries: dict, start_date:
         end_date = datetime.now().strftime("%Y-%m-%d")
         where_clause += f" AND inspection_date between '{start_date}T00:00:00' and '{end_date}T23:59:59'"
         print(f"Date range: {start_date} - {end_date}")
+        
+    if type:
+        where_clause += f" AND results='{type}'"
+        
     
     url = f"https://data.cityofchicago.org/resource/4ijn-s7e5.json?$where={where_clause}&$$app_token={OPEN_DATA_APP_TOKEN}"
     try:
@@ -106,7 +111,6 @@ def search_coordinates_food_inspections(coordinate_boundaries: dict, start_date:
                 summary += f"  Results: {v.get('results', 'Unknown')}\n"
                 summary += f"  Date: {v.get('inspection_date', 'Unknown')}\n"
                 summary += f"  Violation: {v.get('violations', 'Unknown')}\n"
-                summary += f"  Risk Level: {v.get('risk', 'Unknown')}\n"
 
             if len(summary) > 10000:
                 return summary[:10000] + "\n This query returned a huge amount of data and had to be truncated, so it's probably incomplete."
