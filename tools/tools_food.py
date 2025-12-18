@@ -28,7 +28,7 @@ def search_address_food_inspections(name: str = None, address: str = None, coord
         address_or_name = " ".join(filter(None, [name, address]))
         
         where_clause = " AND ".join(filter(None, [
-            f"dba_name='{name}'" if name else None,
+            f"dba_name like '%{name}%'" if name else None,
             f"address='{address}'" if address else None
         ]))
     else:
