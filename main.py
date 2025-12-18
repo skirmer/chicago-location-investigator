@@ -69,5 +69,5 @@ if __name__ == "__main__":
     )
 
     print(response["messages"][-1].content)
-    for message in response["messages"]:
-        print(f"\n{message.type.upper()}: {message.content}")
+    # for message in response["messages"]:
+    #     print(f"\n{message.type.upper()}: {message.content}")
