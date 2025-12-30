@@ -11,6 +11,8 @@ dependencies = [
     "geopy>=2.4.1",
     "langchain>=1.1.3",
     "langchain-anthropic>=1.2.0",
+    "langchain-ollama>=1.0.1",
+    "ollama>=0.6.1",
     "pandas>=2.3.3",
     "requests>=2.32.5",
 ]

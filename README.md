@@ -22,16 +22,28 @@ Here are some examples to help spark your imagination:
 
 
 ## Authentication
-In order to run this for yourself, you'll need to have two values in your environment:
-* `ANTHROPIC_API_KEY` - a key for the Anthropic LLM API (you can also fork this and change the code to use your preferred LLM, but other APIs are not currently supported.)
+In order to run this for yourself, you'll need to have a value in your environment:
 * `OPEN_DATA_APP_TOKEN` - a key for accessing the Chicago Open Data Portal API. Learn how you can get yours here for free: https://support.socrata.com/hc/en-us/articles/210138558-Generating-App-Tokens-and-API-Keys
 
+## Models
+This project now supports ollama open source models. To set up on MacOS:
+```bash 
+brew install ollama
+ollama pull llama3.1
+``` 
+(or your choice of tool-capable model)
+
+And don't forget to update the `models/ollama.py` file if you chose something other than llama 3.1.
+
+If you want to use an Anthropic model, update the `models/anthropic.py` file to list the correct model version (it references Claude Haiku 4.5 right now). Then make sure to have your API key in the environment named as `ANTHROPIC_API_KEY`. I like to just use a .env file in the project to manage this sort of thing.
+
+>I find that the llama3.1 model doesn't do as good a job managing tasks and chaining tool calls as claude haiku, but it's a tradeoff with cost that may be worth it.
 
 ## To run a query
-Install `uv` if you haven't already. Make sure you have the environment variables above set.
+Install `uv` if you haven't already. Make sure you have the environment variables above set as needed.
 
 ```bash
-uv run python main.py --query "Are there any building violations related to electricity at 123 Main Street since June 2025?"
+uv run python main.py --query "Are there any building violations related to electricity at 1600 Chicago Avenue since June 2025?" --model_name "llama3.1"
 ```
 If you don't provide a prompt, one will be provided by default for an example. 
 
@@ -47,3 +59,5 @@ There are two testing structures in this repo.
 The agent does occasionally make mistakes, such as mis-counting the number of records listed, because LLMs are not by nature equipped for arithmetic. I'll be adding tools over time that will assist the agent in doing this kind of calculation so it doesn't try to do it with LLM.
 
 This is not a conversational LLM, just a one-shot agent, so even if the LLM asks follow up questions, there's no mechanism for answering or continuing the exchange. If there's demand for this kind of thing, I may consider adding it later.
+
+
