@@ -2,8 +2,10 @@ import sys
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 from langchain.agents import create_agent
-from langchain_anthropic import ChatAnthropic
+from chicago_location_investigator.models.ollama import model as model_llama3_1
+from chicago_location_investigator.models.anthropic import model as model_anthropic
 import pytest
+
 
 from dotenv import load_dotenv
 
@@ -63,25 +65,25 @@ system_prompt = """You are a research assistant helping users find information a
 @pytest.fixture
 def agent():
 
-    from tools.tools_geocoding import geocode_address, get_proximity_to_coords
+    from chicago_location_investigator.tools.tools_geocoding import geocode_address, get_proximity_to_coords
 
-    from tools.tools_violations import (
+    from chicago_location_investigator.tools.tools_violations import (
         search_address_violations,
         get_violation_details,
         search_coordinates_violations,
     )
 
-    from tools.tools_permits import (
+    from chicago_location_investigator.tools.tools_permits import (
         search_address_active_building_permits,
         search_coordinates_active_building_permits,
     )
 
-    from tools.tools_food import (
+    from chicago_location_investigator.tools.tools_food import (
         search_address_food_inspections,
         search_coordinates_food_inspections,
     )
 
-    model = ChatAnthropic(model="claude-haiku-4-5")
+    model = model_llama3_1
     return create_agent(
         model=model,
         tools=[
@@ -100,7 +102,7 @@ def agent():
 
 
 @pytest.mark.parametrize("run", range(num_runs))
-@patch("tools.tools_violations.requests.get")
+@patch("chicago_location_investigator.tools.tools_violations.requests.get")
 def test_agent_formats_address_correctly(mock_get, agent, run):
     mock_response = MagicMock()
     mock_response.status_code = 200
@@ -126,7 +128,7 @@ def test_agent_formats_address_correctly(mock_get, agent, run):
 
 
 @pytest.mark.parametrize("run", range(num_runs))
-@patch("tools.tools_violations.requests.get")
+@patch("chicago_location_investigator.tools.tools_violations.requests.get")
 def test_agent_formats_address_correctly2(mock_get, agent, run):
     """If the address has no direction or no street type, it should still work"""
     mock_response = MagicMock()
@@ -150,7 +152,7 @@ def test_agent_formats_address_correctly2(mock_get, agent, run):
 
 
 @pytest.mark.parametrize("run", range(num_runs))
-@patch("tools.tools_violations.requests.get")
+@patch("chicago_location_investigator.tools.tools_violations.requests.get")
 def test_agent_formats_address_correctly3(mock_get, agent, run):
 
     mock_response = MagicMock()
@@ -174,7 +176,7 @@ def test_agent_formats_address_correctly3(mock_get, agent, run):
 
 
 def mock_multi_tool_response(url, *args, **kwargs):
-    """Mock response handler for tests that call multiple tools."""
+    """Mock response handler for tests that call multiple chicago_location_investigator.tools."""
     mock_response = MagicMock()
     mock_response.status_code = 200
 
@@ -187,7 +189,7 @@ def mock_multi_tool_response(url, *args, **kwargs):
 
 
 @pytest.mark.parametrize("run", range(num_runs))
-@patch("tools.tools_violations.requests.get")
+@patch("chicago_location_investigator.tools.tools_violations.requests.get")
 def test_agent_calls_multiple_tools_in_order(mock_get, agent, run):
     mock_response = MagicMock()
     mock_response.status_code = 200
@@ -215,7 +217,7 @@ def test_agent_calls_multiple_tools_in_order(mock_get, agent, run):
 
 
 @pytest.mark.parametrize("run", range(num_runs))
-@patch("tools.tools_violations.requests.get")
+@patch("chicago_location_investigator.tools.tools_violations.requests.get")
 def test_agent_handles_date_filtering(mock_get, agent, run):
     mock_response = MagicMock()
     mock_response.status_code = 200
@@ -255,7 +257,7 @@ def mock_violation_details_response(url, *args, **kwargs):
 
 
 @pytest.mark.parametrize("run", range(num_runs))
-@patch("tools.tools_violations.requests.get")
+@patch("chicago_location_investigator.tools.tools_violations.requests.get")
 def test_agent_handles_extra_detail_filtering(mock_get, agent, run):
     mock_response = MagicMock()
     mock_response.status_code = 200

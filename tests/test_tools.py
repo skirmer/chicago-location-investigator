@@ -46,14 +46,14 @@ MOCK_DETAILS_RESPONSE2 = [
 # Tests for Building Code Violations tools
 #================================================
 
-@patch("tools.tools_violations.requests.get")
+@patch("chicago_location_investigator.tools.tools_violations.requests.get")
 def test_get_violations_basic(mock_get):
     mock_response = MagicMock()
     mock_response.status_code = 200
     mock_response.json.return_value = MOCK_SEARCH_RESPONSE
     mock_get.return_value = mock_response
 
-    from tools.tools_violations import search_address_violations
+    from chicago_location_investigator.tools.tools_violations import search_address_violations
 
     result = search_address_violations("123 N MAIN ST")
 
@@ -61,14 +61,14 @@ def test_get_violations_basic(mock_get):
     assert "12345" in result
 
 
-@patch("tools.tools_violations.requests.get")
+@patch("chicago_location_investigator.tools.tools_violations.requests.get")
 def test_get_violation_details(mock_get):
     mock_response = MagicMock()
     mock_response.status_code = 200
     mock_response.json.return_value = MOCK_DETAILS_RESPONSE
     mock_get.return_value = mock_response
 
-    from tools.tools_violations import get_violation_details
+    from chicago_location_investigator.tools.tools_violations import get_violation_details
 
     result = get_violation_details("123 N MAIN ST")
 
@@ -106,14 +106,14 @@ MOCK_FOOD_RESPONSE = [
 ]
 
 
-@patch("tools.tools_food.requests.get")
+@patch("chicago_location_investigator.tools.tools_food.requests.get")
 def test_get_food_details_address(mock_get):
     mock_response = MagicMock()
     mock_response.status_code = 200
     mock_response.json.return_value = MOCK_FOOD_RESPONSE
     mock_get.return_value = mock_response
 
-    from tools.tools_food import search_address_food_inspections
+    from chicago_location_investigator.tools.tools_food import search_address_food_inspections
 
     result = search_address_food_inspections(address="1651 W CHICAGO AVE")
 
@@ -122,7 +122,7 @@ def test_get_food_details_address(mock_get):
 
 
 def test_get_food_details_address_missing():
-    from tools.tools_food import search_address_food_inspections
+    from chicago_location_investigator.tools.tools_food import search_address_food_inspections
 
     with pytest.raises(Exception) as excinfo:
         search_address_food_inspections()
@@ -133,14 +133,14 @@ def test_get_food_details_address_missing():
     )
 
 
-@patch("tools.tools_food.requests.get")
+@patch("chicago_location_investigator.tools.tools_food.requests.get")
 def test_get_food_details_coords(mock_get):
     mock_response = MagicMock()
     mock_response.status_code = 200
     mock_response.json.return_value = MOCK_FOOD_RESPONSE
     mock_get.return_value = mock_response
 
-    from tools.tools_food import search_coordinates_food_inspections
+    from chicago_location_investigator.tools.tools_food import search_coordinates_food_inspections
 
     result = search_coordinates_food_inspections(
         coordinate_boundaries={
@@ -159,7 +159,7 @@ def test_get_food_details_coords(mock_get):
 # Tests for Geocoding tools
 #================================================
 def test_coord_proximity():
-    from tools.tools_geocoding import get_proximity_to_coords
+    from chicago_location_investigator.tools.tools_geocoding import get_proximity_to_coords
 
     result = get_proximity_to_coords(coordinates=(41.98365, -87.983745))
     assert result == {
@@ -263,28 +263,28 @@ MOCK_PERMIT_RESPONSE = [
 ]
 
 
-@patch("tools.tools_permits.requests.get")
+@patch("chicago_location_investigator.tools.tools_permits.requests.get")
 def test_get_permit_details_address(mock_get):
     mock_response = MagicMock()
     mock_response.status_code = 200
     mock_response.json.return_value = MOCK_PERMIT_RESPONSE
     mock_get.return_value = mock_response
 
-    from tools.tools_permits import search_address_active_building_permits
+    from chicago_location_investigator.tools.tools_permits import search_address_active_building_permits
 
     result = search_address_active_building_permits(house_number="830", cardinal_direction="N", street= "Marshfield Ave")
 
     assert "GARAGE W/ ROOF DECK" in result
     assert "PERMIT" in result
 
-@patch("tools.tools_permits.requests.get")
+@patch("chicago_location_investigator.tools.tools_permits.requests.get")
 def test_get_food_details_coords(mock_get):
     mock_response = MagicMock()
     mock_response.status_code = 200
     mock_response.json.return_value = MOCK_PERMIT_RESPONSE
     mock_get.return_value = mock_response
 
-    from tools.tools_permits import search_coordinates_active_building_permits
+    from chicago_location_investigator.tools.tools_permits import search_coordinates_active_building_permits
 
     result = search_coordinates_active_building_permits(
         coordinate_boundaries={
