@@ -43,7 +43,7 @@ If you want to use an Anthropic model, update the `models/anthropic.py` file to 
 Install `uv` if you haven't already. Make sure you have the environment variables above set as needed.
 
 ```bash
-uv run python main.py --query "Are there any building violations related to electricity at 1600 Chicago Avenue since June 2025?" --model_name "llama3.1"
+uv run python chicago_location_investigator/main.py --query "Are there any building violations related to electricity at 1600 Chicago Avenue since June 2025?" --model_name "llama3.1"
 ```
 If you don't provide a prompt, one will be provided by default for an example. 
 
