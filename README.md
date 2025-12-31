@@ -23,7 +23,7 @@ Here are some examples to help spark your imagination:
 
 ## Authentication
 In order to run this for yourself, you'll need to have a value in your environment:
-* `OPEN_DATA_APP_TOKEN` - a key for accessing the Chicago Open Data Portal API. Learn how you can get yours here for free: https://support.socrata.com/hc/en-us/articles/210138558-Generating-App-Tokens-and-API-Keys
+* `OPEN_DATA_APP_TOKEN` - a key for accessing the Chicago Open Data Portal API, using your account at https://data.cityofchicago.org/. Log in and create your app token (for free!), in the Developer Settings section of your profile. There are more tips for creating the app token here: https://support.socrata.com/hc/en-us/articles/210138558-Generating-App-Tokens-and-API-Keys
 
 ## Models
 This project now supports ollama open source models. To set up on MacOS:
