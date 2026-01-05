@@ -78,12 +78,6 @@ def search_address_violations(
     Returns:
         A text summary including: violation numbers, dates, and status
     """
-    
-    # if "CHICAGO, ILLINOIS" in address:
-    #     print("Model added city state to the address incorrectly")
-    #     address = address.replace(", CHICAGO, ILLINOIS", "")
-    #     print(address)
-    #     exit()
         
     where_clause = f"address='{address}'"
     print(f"Retrieving building violations for address {address}")
@@ -98,13 +92,10 @@ def search_address_violations(
 
     url = f"https://data.cityofchicago.org/resource/22u3-xenr.json?$where={where_clause}&$$app_token={OPEN_DATA_APP_TOKEN}"
 
-    print(where_clause)
     try:
         response = requests.get(url)
-        print(response.status_code)
         if response.status_code == 200:
             inspections = response.json()
-            print(inspections)
             violations = [
                 x for x in inspections if x.get("inspection_status") == "FAILED"
             ]
@@ -119,11 +110,9 @@ def search_address_violations(
                 summary += f"  Date: {v.get('violation_date', 'Unknown')}\n"
 
             if len(summary) > 10000:
-                print(summary)
                 return summary[:10000] + "\n This query returned a huge amount of data and had to be truncated, so it's probably incomplete."
 
             else:
-                print(summary)
                 return summary
         else:
             return f"Error retrieving data: {response.status_code}"
