@@ -47,6 +47,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Query building code violations in Chicago')
     parser.add_argument('-m', '--model_name', type=str, required=False, help='The LLM to use to run the agent', default='llama3.1')    
     parser.add_argument('-q', '--query', type=str, required=False, help='The query to ask about building violations')
+    parser.add_argument('-d', '--debug', type=str, required=False, help='Whether you want to run the job in debug mode, getting all the model exchanges')
     args = parser.parse_args()
     
     if args.query:
@@ -80,5 +81,7 @@ if __name__ == "__main__":
     )
 
     print(response["messages"][-1].content)
-    for message in response["messages"]:
-        print(f"\n{message.type.upper()}: {message.content}")
+    
+    if args.debug:
+        for message in response["messages"]:
+            print(f"\n{message.type.upper()}: {message.content}")
