@@ -8,7 +8,7 @@ from tools.tools_geocoding import geocode_address, get_proximity_to_coords
 from tools.tools_violations import search_address_violations, get_violation_details, search_coordinates_violations
 
 from tools.tools_permits import search_address_active_building_permits, search_coordinates_active_building_permits
-
+from tools.tools_art import search_coordinates_murals
 from tools.tools_food import search_address_food_inspections, search_coordinates_food_inspections
 from models.ollama import model as model_llama3_1
 from models.anthropic import model as model_anthropic
@@ -23,7 +23,7 @@ OPEN_DATA_APP_TOKEN = os.getenv("OPEN_DATA_APP_TOKEN")
 def setup(model):
     agent = create_agent(
         model=model,
-        tools=[search_address_violations, get_violation_details, search_address_active_building_permits, search_address_food_inspections, geocode_address, get_proximity_to_coords, search_coordinates_violations, search_coordinates_active_building_permits, search_coordinates_food_inspections],
+        tools=[search_address_violations, get_violation_details, search_address_active_building_permits, search_address_food_inspections, geocode_address, get_proximity_to_coords, search_coordinates_violations, search_coordinates_active_building_permits, search_coordinates_food_inspections, search_coordinates_murals],
         system_prompt="""You are a research assistant helping users find information about buildings in Chicago, Illinois. They will submit an address, and possibly a date or date range to look for.
 
     When addresses are provided, convert them to all-caps and format cardinal directions with one letter (eg, N for North) and abbreviate street types (eg, BLVD for Boulevard). Where restaurant names are provided, also convert them to all-caps before passing to a tool.
@@ -38,6 +38,7 @@ def setup(model):
     7. search_address_food_inspections - Get a listing of health department inspections for restaurants or food services. Accepts name and/or address.
     8. search_coordinates_food_inspections - Get a listing of health department inspections for restaurants or food services found within coordinate boundaries.
     9. search_coordinates_violations - Get a listing of building code violations within coordinate boundaries.
+    10. search_coordinates_murals - Get a listing of public art murals on buildings within coordinate boundaries.
 
     Use multiple tools when helpful to provide comprehensive answers. Do not ask follow up questions or offer to do more. If results had to be truncated due to length, let the user know.""",
     )

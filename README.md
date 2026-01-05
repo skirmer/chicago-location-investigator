@@ -1,7 +1,7 @@
 # Chicago Location Investigator Project
 
 
-This project contains a generative AI agent that assists in research on building codes violations, building permits, and health inspections for food service in Chicago, using the Chicago Open Data Portal. The user submits a plain language query for a particular address, with or without date range filtering, and the agent uses tools to identify the relevant records, and research for further details if appropriate.
+This project contains a generative AI agent that assists in research on building codes violations, building permits, public murals, and health inspections for food service in Chicago, using the Chicago Open Data Portal. The user submits a plain language query for a particular address, with or without date range filtering, and the agent uses tools to identify the relevant records, and research for further details if appropriate.
 
 The agent has a limited capability to search Chicago Open Data Portal APIs currently, but new functionalities will be added. PRs to add tools for more APIs are welcome, please contribute a function for your favorite dataset about Chicago locations, businesses, and buildings.
 
@@ -17,6 +17,7 @@ The agent has a limited capability to search Chicago Open Data Portal APIs curre
 
 Here are some examples to help spark your imagination:
 * "Recommend five restaurants within 1 mile of [ADDRESS] that have not failed a health department inspection in the past month"
+* "What public murals can I see within .25 miles of [ADDRESS]? Give addresses and descriptions."
 * "I'm walking by the restaurant [NAME OF RESTAURANT] right now - have they failed a health department inspection this year?"
 * "Get all the building code violations for addresses from 2025 within .1 mile of [ADDRESS], and check and see if any of those addresses have active building permits. Tell me what the code violations are, and list the building permits so I can see if the permits might be remediating the violations."
 
