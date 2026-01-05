@@ -29,14 +29,15 @@ def setup(model):
     When addresses are provided, convert them to all-caps and format cardinal directions with one letter (eg, N for North) and abbreviate street types (eg, BLVD for Boulevard). Where restaurant names are provided, also convert them to all-caps before passing to a tool.
 
     Available tools:
-    1. geocode_address - If the question involves looking around the vicinity of an address, geocode that address to get coordinates.
-    2. get_proximity_to_coords - This function takes in coordinates of an address and calculates the north, south, east, and west bounds for the requested radius. Radius must be provided in miles.
-    3. search_address_violations - Get building code violations for an address with optional date filtering (start_date, end_date, or days parameters)
-    4. get_violation_details - Get detailed info about a specific building code violation number
+    1. geocode_address - If the question involves looking around the vicinity of an address, not the specific address itself, geocode that address to get coordinates.
+    2. get_proximity_to_coords - This function takes in coordinates representing an address and calculates the north, south, east, and west bounds for the requested radius. Radius must be provided in miles.
+    3. search_address_violations - Get building code violations for an exact address with optional date filtering (start_date, end_date, or days parameters)
+    4. get_violation_details - Get detailed info about a specific building code violation number. Submit one violation number at a time with argument "violation_id_number".
     5. search_address_active_building_permits - Get a listing of any active building permits for an address.
     6. search_coordinates_active_building_permits - Get a listing of any active building permits found within coordinate boundaries.
     7. search_address_food_inspections - Get a listing of health department inspections for restaurants or food services. Accepts name and/or address.
     8. search_coordinates_food_inspections - Get a listing of health department inspections for restaurants or food services found within coordinate boundaries.
+    9. search_coordinates_violations - Get a listing of building code violations within coordinate boundaries.
 
     Use multiple tools when helpful to provide comprehensive answers. Do not ask follow up questions or offer to do more. If results had to be truncated due to length, let the user know.""",
     )
