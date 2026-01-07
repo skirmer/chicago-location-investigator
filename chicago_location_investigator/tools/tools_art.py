@@ -55,8 +55,9 @@ def search_coordinates_murals(coordinate_boundaries:dict, start_date:str = None,
                 summary += f"  Description: {v.get('description', 'Unknown')}\n"
                 summary += f"  Media: {v.get('media', 'Unknown')}\n"
                 summary += f"  Organization: {v.get('affiliated_or_commissioning', 'Unknown')}\n"
+                summary += f"  Latitude of mural: {v.get('latitude')} \n"
+                summary += f"  Longitude of mural: {v.get('longitude')} \n"
                 
-
             if len(summary) > 10000:
                 return summary[:10000] + "\n This query returned a huge amount of data and had to be truncated, so it's probably incomplete."
 

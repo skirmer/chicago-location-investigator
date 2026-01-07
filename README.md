@@ -12,7 +12,6 @@ The agent has a limited capability to search Chicago Open Data Portal APIs curre
 - You can add filtering language such as "violations currently open" or "permits related to plumbing" etc and the agent will look at the details and inspector notes to try and accommodate.  
 - You can also request data from a proximity around the address, such as "All building permits currently active within .5 miles of 123 Main Street". *(The tool will use the OpenStreetMaps geocoder known as Nominatim through geopy to run geocoding, but this will have strict rate limiting, so be careful and DEFINITELY don't send more than 1 request per second. If you just submit a request for a single address, the agent will not need to geocode and will not hit Nominatim.)*
 
-
 ## Example Queries
 
 Here are some examples to help spark your imagination:
@@ -25,6 +24,9 @@ Here are some examples to help spark your imagination:
 ## Authentication
 In order to run this for yourself, you'll need to have a value in your environment:
 * `OPEN_DATA_APP_TOKEN` - a key for accessing the Chicago Open Data Portal API, using your account at https://data.cityofchicago.org/. Log in and create your app token (for free!), in the Developer Settings section of your profile. There are more tips for creating the app token here: https://support.socrata.com/hc/en-us/articles/210138558-Generating-App-Tokens-and-API-Keys
+
+If you want to use any of the Google Maps related functionalities, you should also put a Google API token in your environment.
+* `GOOGLE_API_KEY` - Log in to https://console.cloud.google.com and create an API key. Make sure it has Street View Static API and Maps Static API enabled, and place the API key in your environment. If you have trouble getting the right key with the right enabled functionality, you may need to enable more APIs.
 
 ## Models
 This project now supports ollama open source models. To set up on MacOS:
@@ -60,5 +62,4 @@ There are two testing structures in this repo.
 The agent does occasionally make mistakes, such as mis-counting the number of records listed, because LLMs are not by nature equipped for arithmetic. I'll be adding tools over time that will assist the agent in doing this kind of calculation so it doesn't try to do it with LLM.
 
 This is not a conversational LLM, just a one-shot agent, so even if the LLM asks follow up questions, there's no mechanism for answering or continuing the exchange. If there's demand for this kind of thing, I may consider adding it later.
-
 
