@@ -3,6 +3,7 @@ from datetime import datetime
 import os
 from dotenv import load_dotenv
 from langchain.tools import tool
+from chicago_location_investigator.tools.data_model import LocationInput, ExactAddress, ExactCoordinates, CoordinateBoundaries
 
 load_dotenv()
 OPEN_DATA_APP_TOKEN = os.getenv("OPEN_DATA_APP_TOKEN")
@@ -69,12 +70,18 @@ def search_address_food_inspections(name: str = None, address: str = None, coord
     except Exception as e:
         return f"Error: {e}"
     
-def search_coordinates_food_inspections(coordinate_boundaries: dict, type: str=None, start_date: str = None, end_date: str = None
+def search_food_inspections(location:LocationInput, type: str=None, start_date: str = None, end_date: str = None
 ) -> str:
-    """Search for any results of recent health department inspections of restaurants within the bounds of a geocoordinate range.
+    """Search for any results of recent health department inspections of restaurants.
 
     Args:
-        coordinate_boundaries: The dict of the coordinate boundaries in format {"north":north_bound, "south":south_bound, "east":east_bound, "west": west_bound}
+        location:
+            location_type = "coordinate_boundaries"
+                value.coordinate_boundaries must be provided 
+            location_type = "coordinates"
+                value.latitude, value.longitude, and value.coordinates must be provided
+            location_type = "exact_address"
+                value.address, value.house_number, value.street_direction, and value.street must be provided
         start_date: Optional start date in YYYY-MM-DD format (e.g., '2024-01-01')
         end_date: Optional end date in YYYY-MM-DD format (e.g., '2024-12-31')
         type: Optional, indicate the type of results desired. Options: "Fail", "Pass"
@@ -83,8 +90,13 @@ def search_coordinates_food_inspections(coordinate_boundaries: dict, type: str=N
         A text summary including: details and date.
     """
     
-    where_clause = f"latitude%20between%20{coordinate_boundaries['south']}%20and%20{coordinate_boundaries['north']}%20AND%20longitude%20between%20{coordinate_boundaries['west']}%20and%20{coordinate_boundaries['east']}"
-        
+    if isinstance(location.value, CoordinateBoundaries):
+        where_clause = f"latitude%20between%20{location.value.coordinate_boundaries['south']}%20and%20{location.value.coordinate_boundaries['north']}%20AND%20longitude%20between%20{location.value.coordinate_boundaries['west']}%20and%20{location.value.coordinate_boundaries['east']}"
+    elif isinstance(location.value, ExactAddress):
+        where_clause = f"address='{location.value.address}'"
+    else:
+        print("Malformed input provided")
+          
     if start_date and end_date:
         where_clause += f" AND inspection_date between '{start_date}T00:00:00' and '{end_date}T23:59:59'"
         print(f"Date range: {start_date} - {end_date}")

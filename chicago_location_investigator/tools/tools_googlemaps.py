@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 import requests
 import math
 import inspect
+from tools.data_model import ExactAddress, ExactCoordinates, CoordinateBoundaries
 
 load_dotenv()
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
@@ -12,24 +13,126 @@ gmaps = googlemaps.Client(key=GOOGLE_API_KEY)
 
 
 class CollectPlaceData:
-    def __init__(self, address):
+    def __init__(self, address:ExactAddress):
+        """
+        Initialize a GoogleMaps tool instance for a specific address.
+
+        Args:
+            address (str): The street address to investigate and analyze.
+
+        Attributes:
+            address (str): The provided street address.
+            place_id: The Google Maps place ID for the address, obtained from the first result.
+            place_coords: Coordinates for the place, initially set to None.
+        """
         self.address = address
         self.place_id = self.get_place_id(address)[0]
         self.place_coords = None
         
-    def get_place_id(self,address="1856 South Loomis, Chicago IL"):
+    def get_place_id(self,address: str ="1856 South Loomis, Chicago IL"):
+        """
+        Retrieve the place ID for a given address using Google Maps API.
+
+        Args:
+            address (str, optional): The address to search for. Defaults to "1856 South Loomis, Chicago IL".
+
+        Returns:
+            tuple: A tuple containing the place ID as the first element. Note: Returns a tuple with trailing comma.
+
+        Raises:
+            KeyError: If the API response doesn't contain expected 'candidates' key or if no candidates are found.
+            Exception: If the Google Maps API call fails or returns an error.
+        """
         place = gmaps.find_place(address, input_type = 'textquery')
         return place['candidates'][0]['place_id'], 
 
     def get_place_details(self):
+        """
+        Retrieves detailed information about a place using Google Maps API.
+
+        This method fetches comprehensive place details from Google Maps using the 
+        instance's place_id attribute. It also extracts and stores the geographical 
+        coordinates of the place in the instance's place_coords attribute.
+
+        Returns:
+            dict: A dictionary containing the full place details response from the 
+                  Google Maps API, including geometry, address components, ratings, 
+                  reviews, and other available place information.
+
+        Raises:
+            googlemaps.exceptions.ApiError: If the API request fails or returns an error.
+            KeyError: If the expected structure is not present in the API response.
+
+        Note:
+            Requires the instance to have a valid place_id attribute set before calling.
+            The method updates the instance's place_coords attribute as a side effect.
+        """
         place = gmaps.place(self.place_id)
         self.place_coords = place['result']['geometry']['location']
         return place
 
-    def get_nearby_places(self):
+    def get_nearby_places(self, radius_mi:float =.25):
+        """
+        Retrieve nearby places within a specified radius of the current location.
+        This method uses the Google Maps Places API to find nearby locations and extracts
+        relevant details for each place found within the search radius.
+        Args:
+            radius_mi (float, optional): Search radius in miles. Defaults to 0.25 miles.
+        Returns:
+            list[dict]: A list of dictionaries containing place details. Each dictionary
+                        includes the following keys:
+                        - geometry: Geographic location data
+                        - name: Name of the place
+                        - address: Vicinity/address information
+                        - place_id: Unique Google Places identifier
+                        - business_status: Current operational status
+                        - international_phone_number: Contact phone number
+                        - business_types: List of place type categories
+                        - rating: User rating score
+                        - price_level: Price level indicator
+        Note:
+            Requires get_place_details() to be called first to establish place_coords.
+            Radius is converted from miles to meters (multiplied by 1609) for the API call.
+        """
         _ = self.get_place_details()
-        nearby = gmaps.places_nearby(self.place_coords, radius = .1)
-        return nearby
+        nearby = gmaps.places_nearby(self.place_coords, radius = (radius_mi * 1609))
+        
+        details_list = []
+        for i in nearby['results']:
+            details_list.append(
+                {"geometry": i.get("geometry"),
+                 "name": i.get("name"),
+                 "address": i.get("vicinity"),
+                 "place_id": i.get("place_id"),
+                 "business_status": i.get("business_status"),
+                 "international_phone_number": i.get("international_phone_number"),
+                 "business_types": i.get("types"),
+                 "rating": i.get("rating"),
+                 "price_level": i.get("price_level")}
+            )
+        
+        return details_list
+    
+    def get_nearby_restaurants(self, radius_mi:float):
+        """
+        Get nearby restaurants within a specified radius.
+        Filters nearby places to return only operational restaurants.
+        Args:
+            radius_mi (float): Search radius in miles from the current location.
+        Returns:
+            list: A list of dictionaries containing restaurant information. Each dictionary
+                    includes details about restaurants that are currently operational and 
+                    have 'restaurant' in their business types.
+        Note:
+            This method relies on get_nearby_places() to retrieve initial place data,
+            then filters for restaurants with 'OPERATIONAL' business status.
+        """
+        places = self.get_nearby_places(radius_mi=radius_mi)
+        
+        restaurants = [i for i in places if 'restaurant' in i['business_types'] and i['business_status'] == 'OPERATIONAL']
+        return restaurants
+    
+    
 
 def get_street_view(coordinates, filename=None):
     """Pass latitude and longitude of a point in a dict with format {"lat":latitude, "lng":longitude}, and this function saves an image file to disk showing the street view of that location
@@ -112,7 +215,7 @@ def calculate_heading(src_lat, src_lng, dest_lat, dest_lng):
 
 if __name__ == "__main__":
 
-    detail = CollectPlaceData(address="1601 W Chicago Ave").get_nearby_places()
+    detail = CollectPlaceData(address="1601 W Chicago Ave").get_nearby_restaurants(radius_mi=.2)
     print(detail)
     
     # place = get_place_details()

@@ -3,23 +3,28 @@ from dotenv import load_dotenv
 
 load_dotenv()
 OPEN_DATA_APP_TOKEN = os.getenv("OPEN_DATA_APP_TOKEN")
-
+from chicago_location_investigator.tools.data_model import LocationInput, ExactAddress, ExactCoordinates, CoordinateBoundaries
 from geopy.geocoders import Nominatim
 import math
 import time
 from geopy.exc import GeocoderTimedOut, GeocoderUnavailable
 
-def geocode_address(address:str):
-    """Provide an address including city and state, and this function will return geocoordinates for this location.
-    This is rate limited as the geocoding API is free, so don't send more than 1 request per second.
+def geocode_address(location:LocationInput):
+    """Converts a human-readable street address into (latitude, longitude) coordinates.
+    CRITICAL: Use this tool whenever you have a street address but the target tool requires a 'coordinates' or 'ExactCoordinates' object. Do not attempt to guess or hallucinate coordinates yourself.    This is rate limited as the geocoding API is free, so don't send more than 1 request per second.
 
     Args: 
-        address: The building address in all-caps format (e.g., '1601 W CHICAGO AVE') - unless otherwise indicated, use "CHICAGO, ILLINOIS" as the city and state.
-
+        location:
+            location_type = "exact_address"
+                value.address must be provided
     Returns: 
-        Latitude, Longitude as tuple
+        ExactCoordinates object
     """
-
+    if isinstance(location.value, ExactAddress):
+        address = location.value.address
+    else:
+        print("Malformed input provided")
+        
     app = Nominatim(user_agent="chicago_location_investigator")
     
     max_retries = 3
@@ -29,7 +34,7 @@ def geocode_address(address:str):
         try:
             print(f"Geocoding location {address}")
             location = app.geocode(address).raw
-            return (float(location['lat']), float(location['lon']))
+            return ExactCoordinates(coordinates = (float(location['lat']), float(location['lon'])))
         except (GeocoderTimedOut, GeocoderUnavailable):
             if attempt < max_retries - 1:
                 time.sleep(retry_delay)
@@ -39,15 +44,23 @@ def geocode_address(address:str):
         except Exception as e:
             raise e
 
-def get_proximity_to_coords(coordinates: tuple, dist_in_miles: float = .5):
-    """Provide a tuple of (latitude, longitude) for a location, and this returns geocoordinates within a radius.
+def get_proximity_to_coords(location:LocationInput, dist_in_miles: float = .5):
+    """Provide a tuple of (latitude, longitude) in the form of ExactCoordinates object for a location, and this returns geocoordinates within a radius.
     This will not work on an address, so you must geocode the address before you use this function.
 
     Args: 
-        coordinates: Tuple representing geocoordinates of place, in order latitude, longitude
+        location:
+            location_type = "coordinates"
+                value.coordinates must be provided
     Returns: 
-        dict of coordinates tuples representing the boundaries of that radius in cardinal directions
+        CoordinateBoundaries object representing the boundaries of that radius in cardinal directions
     """
+    if isinstance(location.value, ExactCoordinates):
+        coordinates = location.value.coordinates
+    else:
+        print("Malformed input provided")
+        
+
     earth_radius_miles = 3958.8
     
     latitude_radians = math.radians(coordinates[0])
@@ -61,4 +74,4 @@ def get_proximity_to_coords(coordinates: tuple, dist_in_miles: float = .5):
     east_bound = math.degrees(longitude_radians + longitude_range)
     west_bound = math.degrees(longitude_radians - longitude_range)
 
-    return {"north":north_bound, "south":south_bound, "east":east_bound, "west": west_bound}
+    return CoordinateBoundaries(coordinates={"north":north_bound, "south":south_bound, "east":east_bound, "west": west_bound})

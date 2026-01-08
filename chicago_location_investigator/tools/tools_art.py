@@ -3,27 +3,40 @@ import requests
 from datetime import datetime
 import os
 from dotenv import load_dotenv
+from chicago_location_investigator.tools.data_model import LocationInput, ExactAddress, ExactCoordinates, CoordinateBoundaries
 
 load_dotenv()
 OPEN_DATA_APP_TOKEN = os.getenv("OPEN_DATA_APP_TOKEN")
 
-
-
-def search_coordinates_murals(coordinate_boundaries:dict, start_date:str = None,  end_date: str = None):
+def search_murals(location:LocationInput, start_date:str = None,  end_date: str = None):
     """Search for public murals within the bounds of a set of geocoordinates (north, south, east, and west) with optional date filtering on the date the work was created.
 
     Args:
-        coordinate_boundaries: The dict of the coordinate boundaries in format {"north":north_bound, "south":south_bound, "east":east_bound, "west": west_bound}
+        location:
+            location_type = "coordinate_boundaries"
+                value.coordinate_boundaries must be provided 
+            location_type = "coordinates"
+                value.latitude, value.longitude, and value.coordinates must be provided
+            location_type = "exact_address"
+                value.address, value.house_number, value.street_direction, and value.street must be provided
         start_date: Optional start date in YYYY-MM-DD format (e.g., '2024-01-01')
         end_date: Optional end date in YYYY-MM-DD format (e.g., '2024-12-31')
 
     Returns:
         A text summary including: artist name/credit, artwork title, year installed, medium, and street address
     """
-    # Build where clause with date filtering if provided
-    where_clause = f"latitude%20between%20{coordinate_boundaries['south']}%20and%20{coordinate_boundaries['north']}%20AND%20longitude%20between%20{coordinate_boundaries['west']}%20and%20{coordinate_boundaries['east']}"
 
-    print(f"Retrieving public murals within {coordinate_boundaries}")
+    # Build where clause with date filtering if provided
+    if isinstance(location.value, CoordinateBoundaries):
+        where_clause = f"latitude%20between%20{location.value.coordinate_boundaries['south']}%20and%20{location.value.coordinate_boundaries['north']}%20AND%20longitude%20between%20{location.value.coordinate_boundaries['west']}%20and%20{location.value.coordinate_boundaries['east']}"
+    elif isinstance(location.value, ExactCoordinates):
+        where_clause = f"latitude={location.value.latitude}%20AND%20longitude={location.value.longitude}"
+    elif isinstance(location.value, ExactAddress):
+        where_clause = f"street_address='{location.value.house_number} {location.value.street_direction} {location.value.street.title()}'"
+    else:
+        print("Malformed input provided")
+
+    print(f"Retrieving public murals within {location.value}")
 
     if start_date and end_date:
         where_clause += f" AND violation_date between '{start_date}T00:00:00' and '{end_date}T23:59:59'"
@@ -41,10 +54,10 @@ def search_coordinates_murals(coordinate_boundaries:dict, start_date:str = None,
             murals = response.json()
 
             if not murals:
-                return f"No murals found at {coordinate_boundaries} during date range selected."
+                return f"No murals found at {location.value} during date range selected."
 
             # Format as string summary to make it easier for the LLM to understand
-            summary = f"Found {len(murals)} mural(s) at {coordinate_boundaries} during date range selected:\n\n"
+            summary = f"Found {len(murals)} mural(s) at {location.value} during date range selected:\n\n"
             for v in murals:
                 summary += f"- Mural Registration ID #{v.get('mural_registration_id', 'N/A')}\n"
                 summary += f"  Year Installed: {v.get('year_installed', 'Unknown')}\n"
