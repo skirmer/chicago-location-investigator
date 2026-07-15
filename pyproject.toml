@@ -8,6 +8,7 @@ requires-python = ">=3.12.1"
 dependencies = [
     "altair>=6.0.0",
     "deepeval>=3.7.5",
+    "diskcache>=5.6.3",
     "dotenv>=0.9.9",
     "geopy>=2.4.1",
     "langchain>=1.1.3",

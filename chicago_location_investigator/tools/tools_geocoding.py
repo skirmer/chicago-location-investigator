@@ -8,18 +8,14 @@ from geopy.geocoders import Nominatim
 import math
 import time
 from geopy.exc import GeocoderTimedOut, GeocoderUnavailable
+from diskcache import Cache
+from pathlib import Path
 
-def geocode_address(address:str):
-    """Provide an address including city and state, and this function will return geocoordinates for this location.
-    This is rate limited as the geocoding API is free, so don't send more than 1 request per second.
+_CACHE_DIR = Path(__file__).resolve().parent.parent / ".geocode_cache"
+geocode_cache = Cache(str(_CACHE_DIR))
 
-    Args: 
-        address: The building address in all-caps format (e.g., '1601 W CHICAGO AVE') - unless otherwise indicated, use "CHICAGO, ILLINOIS" as the city and state.
-
-    Returns: 
-        Latitude, Longitude as tuple
-    """
-
+@geocode_cache.memoize()
+def _geocode_address_cached(address: str):    
     app = Nominatim(user_agent="chicago_location_investigator")
     
     max_retries = 3
@@ -38,6 +34,19 @@ def geocode_address(address:str):
                 raise 
         except Exception as e:
             raise e
+
+def geocode_address(address: str):
+    """Provide an address including city and state, and this function will return geocoordinates for this location.
+    This is rate limited as the geocoding API is free, so don't send more than 1 request per second.
+
+    Args: 
+        address: The building address in all-caps format (e.g., '1601 W CHICAGO AVE') - unless otherwise indicated, use "CHICAGO, ILLINOIS" as the city and state.
+
+    Returns: 
+        Latitude, Longitude as tuple
+    """
+    return _geocode_address_cached(" ".join(address.split()).upper())
+
 
 def get_proximity_to_coords(coordinates: tuple, dist_in_miles: float = .5):
     """Provide a tuple of (latitude, longitude) for a location, and this returns geocoordinates within a radius.

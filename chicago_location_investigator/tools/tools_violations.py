@@ -3,11 +3,12 @@ import requests
 from datetime import datetime
 import os
 from dotenv import load_dotenv
+from tools.write_results import write_results_file
 
 load_dotenv()
 OPEN_DATA_APP_TOKEN = os.getenv("OPEN_DATA_APP_TOKEN")
 
-def search_coordinates_violations(coordinate_boundaries:dict, start_date:str = None,  end_date: str = None):
+def search_coordinates_violations(coordinate_boundaries:dict, start_date:str = None,  end_date: str = None, write_results: bool = False):
     """Search for building code violations within the bounds of a set of geocoordinates (north, south, east, and west) with optional date filtering.
     Returns violation numbers and dates.
 
@@ -15,6 +16,7 @@ def search_coordinates_violations(coordinate_boundaries:dict, start_date:str = N
         coordinate_boundaries: The dict of the coordinate boundaries in format {"north":north_bound, "south":south_bound, "east":east_bound, "west": west_bound}
         start_date: Optional start date in YYYY-MM-DD format (e.g., '2024-01-01')
         end_date: Optional end date in YYYY-MM-DD format (e.g., '2024-12-31')
+        write_results: Optional, set to True when the user wants the full results saved to a CSV file.
 
     Returns:
         A text summary including: violation numbers, dates, and status
@@ -38,6 +40,8 @@ def search_coordinates_violations(coordinate_boundaries:dict, start_date:str = N
         response = requests.get(url)
         if response.status_code == 200:
             inspections = response.json()
+            if write_results:
+                write_results_file(inspections, outputname="violations")
             violations = [
                 x for x in inspections if x.get("inspection_status") == "FAILED"
             ]
@@ -65,7 +69,7 @@ def search_coordinates_violations(coordinate_boundaries:dict, start_date:str = N
 
 
 def search_address_violations(
-    address: str, start_date: str = None, end_date: str = None
+    address: str, start_date: str = None, end_date: str = None, write_results: bool = False
 ) -> str:
     """Search for building code violations at a specific address with optional date filtering.
     Returns violation numbers and dates.
@@ -74,6 +78,7 @@ def search_address_violations(
         address: The building address in all-caps format (e.g., '1601 W CHICAGO AVE')
         start_date: Optional start date in YYYY-MM-DD format (e.g., '2024-01-01')
         end_date: Optional end date in YYYY-MM-DD format (e.g., '2024-12-31')
+        write_results: Optional, set to True when the user wants the full results saved to a CSV file.
 
     Returns:
         A text summary including: violation numbers, dates, and status
@@ -96,6 +101,8 @@ def search_address_violations(
         response = requests.get(url)
         if response.status_code == 200:
             inspections = response.json()
+            if write_results:
+                write_results_file(inspections, outputname="violations")
             violations = [
                 x for x in inspections if x.get("inspection_status") == "FAILED"
             ]

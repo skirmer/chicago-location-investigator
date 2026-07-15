@@ -11,6 +11,7 @@ from tools.tools_permits import search_address_active_building_permits, search_c
 from tools.tools_art import search_coordinates_murals
 from tools.tools_food import search_address_food_inspections, search_coordinates_food_inspections
 from tools.tools_crash import search_coordinates_crash
+from tools.tools_wards import search_ward_for_point
 from models.ollama import model as model_llama3_1
 from models.anthropic import model as model_anthropic
 from models.bedrock import model as model_bedrock
@@ -26,7 +27,7 @@ OPEN_DATA_APP_TOKEN = os.getenv("OPEN_DATA_APP_TOKEN")
 def setup(model):
     agent = create_agent(
         model=model,
-        tools=[search_address_violations, get_violation_details, search_address_active_building_permits, search_address_food_inspections, geocode_address, get_proximity_to_coords, search_coordinates_violations, search_coordinates_active_building_permits, search_coordinates_food_inspections, search_coordinates_murals, search_coordinates_crash],
+        tools=[search_address_violations, get_violation_details, search_address_active_building_permits, search_address_food_inspections, geocode_address, get_proximity_to_coords, search_coordinates_violations, search_coordinates_active_building_permits, search_coordinates_food_inspections, search_coordinates_murals, search_coordinates_crash, search_ward_for_point],
         system_prompt=f"""You are a research assistant helping users find information about locations in Chicago, Illinois. They will submit an address, and possibly a date or date range to look for.
 
     Today's date is {date.today().isoformat()}. Use it to interpret any relative dates or date ranges the user gives (eg, "in the last 6 months" or "since June"). Never search for records dated in the future, and do not search further back than the user has asked for.
@@ -45,6 +46,7 @@ def setup(model):
     9. search_coordinates_violations - Get a listing of building code violations within coordinate boundaries.
     10. search_coordinates_murals - Get a listing of public art murals on buildings within coordinate boundaries.
     11. search_coordinates_crash - Get a listing of car crashes that occurred within coordinate boundaries.
+    12. search_ward_for_point - Given a coordinate point, identify what Chicago city ward it falls into. 
 
     Use multiple tools when helpful to provide comprehensive answers. Do not ask follow up questions or offer to do more. If results had to be truncated due to length, let the user know.""",
     )
