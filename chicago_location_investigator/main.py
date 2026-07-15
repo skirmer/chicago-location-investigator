@@ -3,17 +3,21 @@
 from langchain.agents import create_agent
 import os
 
-from tools.tools_geocoding import geocode_address, get_proximity_to_coords
+from tools.tools_geocoding import geocode_address, get_proximity_to_coords, geocode_intersection
 
 from tools.tools_violations import search_address_violations, get_violation_details, search_coordinates_violations
 
 from tools.tools_permits import search_address_active_building_permits, search_coordinates_active_building_permits
 from tools.tools_art import search_coordinates_murals
 from tools.tools_food import search_address_food_inspections, search_coordinates_food_inspections
+from tools.tools_crash import search_coordinates_crash
+from tools.tools_wards import search_ward_for_point
 from models.ollama import model as model_llama3_1
 from models.anthropic import model as model_anthropic
+from models.bedrock import model as model_bedrock
 
 from dotenv import load_dotenv
+from datetime import date
 import argparse
 
 load_dotenv()
@@ -23,22 +27,27 @@ OPEN_DATA_APP_TOKEN = os.getenv("OPEN_DATA_APP_TOKEN")
 def setup(model):
     agent = create_agent(
         model=model,
-        tools=[search_address_violations, get_violation_details, search_address_active_building_permits, search_address_food_inspections, geocode_address, get_proximity_to_coords, search_coordinates_violations, search_coordinates_active_building_permits, search_coordinates_food_inspections, search_coordinates_murals],
-        system_prompt="""You are a research assistant helping users find information about buildings in Chicago, Illinois. They will submit an address, and possibly a date or date range to look for.
+        tools=[search_address_violations, get_violation_details, search_address_active_building_permits, search_address_food_inspections, geocode_address, get_proximity_to_coords, search_coordinates_violations, search_coordinates_active_building_permits, search_coordinates_food_inspections, search_coordinates_murals, search_coordinates_crash, search_ward_for_point, geocode_intersection],
+        system_prompt=f"""You are a research assistant helping users find information about locations in Chicago, Illinois. They will submit an address, and possibly a date or date range to look for.
+
+    Today's date is {date.today().isoformat()}. Use it to interpret any relative dates or date ranges the user gives (eg, "in the last 6 months" or "since June"). Never search for records dated in the future, and do not search further back than the user has asked for.
 
     When addresses are provided, convert them to all-caps and format cardinal directions with one letter (eg, N for North) and abbreviate street types (eg, BLVD for Boulevard). Where restaurant names are provided, also convert them to all-caps before passing to a tool.
 
     Available tools:
     1. geocode_address - If the question involves looking around the vicinity of an address, not the specific address itself, geocode that address to get coordinates.
-    2. get_proximity_to_coords - This function takes in coordinates representing an address and calculates the north, south, east, and west bounds for the requested radius. Radius must be provided in miles.
-    3. search_address_violations - Get building code violations for an exact address with optional date filtering (start_date, end_date, or days parameters)
-    4. get_violation_details - Get detailed info about a specific building code violation number. Submit one violation number at a time with argument "violation_id_number".
-    5. search_address_active_building_permits - Get a listing of any active building permits for an address.
-    6. search_coordinates_active_building_permits - Get a listing of any active building permits found within coordinate boundaries.
-    7. search_address_food_inspections - Get a listing of health department inspections for restaurants or food services. Accepts name and/or address.
-    8. search_coordinates_food_inspections - Get a listing of health department inspections for restaurants or food services found within coordinate boundaries.
-    9. search_coordinates_violations - Get a listing of building code violations within coordinate boundaries.
-    10. search_coordinates_murals - Get a listing of public art murals on buildings within coordinate boundaries.
+    2. geocode_intersection - If the question involves looking around the vicinity of a cross-streets or corner, geocode the street pair crossing to get coordinates.
+    3. get_proximity_to_coords - This function takes in coordinates representing an address and calculates the north, south, east, and west bounds for the requested radius. Radius must be provided in miles.
+    4. search_address_violations - Get building code violations for an exact address with optional date filtering (start_date, end_date, or days parameters)
+    5. get_violation_details - Get detailed info about a specific building code violation number. Submit one violation number at a time with argument "violation_id_number".
+    6. search_address_active_building_permits - Get a listing of any active building permits for an address.
+    7. search_coordinates_active_building_permits - Get a listing of any active building permits found within coordinate boundaries.
+    8. search_address_food_inspections - Get a listing of health department inspections for restaurants or food services. Accepts name and/or address.
+    9. search_coordinates_food_inspections - Get a listing of health department inspections for restaurants or food services found within coordinate boundaries.
+    10. search_coordinates_violations - Get a listing of building code violations within coordinate boundaries.
+    11. search_coordinates_murals - Get a listing of public art murals on buildings within coordinate boundaries.
+    12. search_coordinates_crash - Get a listing of car crashes that occurred within coordinate boundaries.
+    13. search_ward_for_point - Given a coordinate point, identify what Chicago city ward it falls into. 
 
     Use multiple tools when helpful to provide comprehensive answers. Do not ask follow up questions or offer to do more. If results had to be truncated due to length, let the user know.""",
     )
@@ -64,6 +73,10 @@ if __name__ == "__main__":
     elif args.model_name == 'claude':
         print("Using model Claude Haiku 4.5")
         model = model_anthropic
+    elif args.model_name == 'bedrock':
+        print("Using model Claude Sonnet 5 via AWS Bedrock")
+        model = model_bedrock
+
     else:
         print("No supported model provided, defaulting to Llama 3.1")
         model = model_llama3_1

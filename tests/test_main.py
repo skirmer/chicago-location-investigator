@@ -51,13 +51,18 @@ system_prompt = """You are a research assistant helping users find information a
 
     Available tools:
     1. geocode_address - If the question involves looking around the vicinity of an address, geocode that address to get coordinates.
-    2. get_proximity_to_coords - This function takes in coordinates of an address and calculates the north, south, east, and west bounds for the requested radius. Radius must be provided in miles.
-    3. search_address_violations - Get building code violations for an address with optional date filtering (start_date, end_date, or days parameters)
-    4. get_violation_details - Get detailed info about a specific building code violation number
-    5. search_address_active_building_permits - Get a listing of any active building permits for an address.
-    6. search_coordinates_active_building_permits - Get a listing of any active building permits found within coordinate boundaries.
-    7. search_address_food_inspections - Get a listing of health department inspections for restaurants or food services. Accepts name and/or address.
-    8. search_coordinates_food_inspections - Get a listing of health department inspections for restaurants or food services found within coordinate boundaries.
+    2. geocode_intersection - If the question involves a cross-streets or corner, geocode the street pair to get coordinates.
+    3. get_proximity_to_coords - This function takes in coordinates of an address and calculates the north, south, east, and west bounds for the requested radius. Radius must be provided in miles.
+    4. search_address_violations - Get building code violations for an address with optional date filtering (start_date, end_date, or days parameters)
+    5. get_violation_details - Get detailed info about a specific building code violation number
+    6. search_address_active_building_permits - Get a listing of any active building permits for an address.
+    7. search_coordinates_active_building_permits - Get a listing of any active building permits found within coordinate boundaries.
+    8. search_address_food_inspections - Get a listing of health department inspections for restaurants or food services. Accepts name and/or address.
+    9. search_coordinates_food_inspections - Get a listing of health department inspections for restaurants or food services found within coordinate boundaries.
+    10. search_coordinates_violations - Get a listing of building code violations within coordinate boundaries.
+    11. search_coordinates_murals - Get a listing of public art murals on buildings within coordinate boundaries.
+    12. search_coordinates_crash - Get a listing of car crashes that occurred within coordinate boundaries.
+    13. search_ward_for_point - Given a coordinate point, identify what Chicago city ward it falls into.
 
     Use multiple tools when helpful to provide comprehensive answers. Do not ask follow up questions or offer to do more."""
 
@@ -65,7 +70,7 @@ system_prompt = """You are a research assistant helping users find information a
 @pytest.fixture
 def agent():
 
-    from chicago_location_investigator.tools.tools_geocoding import geocode_address, get_proximity_to_coords
+    from chicago_location_investigator.tools.tools_geocoding import geocode_address, get_proximity_to_coords, geocode_intersection
 
     from chicago_location_investigator.tools.tools_violations import (
         search_address_violations,
@@ -83,6 +88,10 @@ def agent():
         search_coordinates_food_inspections,
     )
 
+    from chicago_location_investigator.tools.tools_art import search_coordinates_murals
+    from chicago_location_investigator.tools.tools_crash import search_coordinates_crash
+    from chicago_location_investigator.tools.tools_wards import search_ward_for_point
+
     model = model_llama3_1
     return create_agent(
         model=model,
@@ -92,10 +101,14 @@ def agent():
             search_address_active_building_permits,
             search_address_food_inspections,
             geocode_address,
+            geocode_intersection,
             get_proximity_to_coords,
             search_coordinates_violations,
             search_coordinates_active_building_permits,
             search_coordinates_food_inspections,
+            search_coordinates_murals,
+            search_coordinates_crash,
+            search_ward_for_point,
         ],
         system_prompt=system_prompt,
     )

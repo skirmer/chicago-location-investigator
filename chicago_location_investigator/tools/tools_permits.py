@@ -3,12 +3,13 @@ import requests
 from datetime import datetime
 import os
 from dotenv import load_dotenv
+from .write_results import write_results_file
 
 load_dotenv()
 OPEN_DATA_APP_TOKEN = os.getenv("OPEN_DATA_APP_TOKEN")
 
 
-def search_address_active_building_permits(house_number:str, cardinal_direction: str, street: str) -> str:
+def search_address_active_building_permits(house_number:str, cardinal_direction: str, street: str, write_results: bool = False) -> str:
     """Search for active building permits issued for a specific address.
     Returns permit details.
 
@@ -16,7 +17,8 @@ def search_address_active_building_permits(house_number:str, cardinal_direction:
         house_number: The number of the house or building on that street (e.g., "123")
         cardinal_direction: The direction of the street, single character, in all caps format. One of N, S, E, or W.
         street: The street name in all-caps format (e.g., 'MAIN ST')
-       
+        write_results: Optional, set to True when the user wants the full results saved to a CSV file.
+
     Returns:
         A text summary including: permit number, status
     """
@@ -30,6 +32,8 @@ def search_address_active_building_permits(house_number:str, cardinal_direction:
         response = requests.get(url)
         if response.status_code == 200:
             permits = response.json()
+            if write_results:
+                write_results_file(permits, outputname="building_permits")
 
             active_permits = [
                 x for x in permits if x.get("permit_status") == "ACTIVE"
@@ -58,13 +62,14 @@ def search_address_active_building_permits(house_number:str, cardinal_direction:
         return f"Error: {e}"
     
 
-def search_coordinates_active_building_permits(coordinate_boundaries:dict) -> str:
+def search_coordinates_active_building_permits(coordinate_boundaries:dict, write_results: bool = False) -> str:
     """Search for active building permits issued within a set of coordinates.
     Returns permit details.
 
     Args:
         coordinate_boundaries: The dict of the coordinate boundaries in format {"north":north_bound, "south":south_bound, "east":east_bound, "west": west_bound}
-       
+        write_results: Optional, set to True when the user wants the full results saved to a CSV file.
+
     Returns:
         A text summary including: permit number, status, and address
     """
@@ -79,6 +84,8 @@ def search_coordinates_active_building_permits(coordinate_boundaries:dict) -> st
         response = requests.get(url)
         if response.status_code == 200:
             permits = response.json()
+            if write_results:
+                write_results_file(permits, outputname="building_permits")
             active_permits = [
                 x for x in permits if x.get("permit_status") == "ACTIVE"
             ]

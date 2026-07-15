@@ -3,11 +3,12 @@ from datetime import datetime
 import os
 from dotenv import load_dotenv
 from langchain.tools import tool
+from .write_results import write_results_file
 
 load_dotenv()
 OPEN_DATA_APP_TOKEN = os.getenv("OPEN_DATA_APP_TOKEN")
 
-def search_address_food_inspections(name: str = None, address: str = None, coordinate_boundaries: dict=None, start_date: str = None, end_date: str = None
+def search_address_food_inspections(name: str = None, address: str = None, coordinate_boundaries: dict=None, start_date: str = None, end_date: str = None, write_results: bool = False
 ) -> str:
     """Search for any results of recent health department inspections of restaurants by address or name.
 
@@ -16,11 +17,12 @@ def search_address_food_inspections(name: str = None, address: str = None, coord
         name: optional, the business name
         start_date: Optional start date in YYYY-MM-DD format (e.g., '2024-01-01')
         end_date: Optional end date in YYYY-MM-DD format (e.g., '2024-12-31')
+        write_results: Optional, set to True when the user wants the full results saved to a CSV file.
 
     Returns:
         A text summary including: details and date.
     """
-    
+
     if not address and not name and not coordinate_boundaries:
         raise Exception("Either name, coordinates, or address is necessary to find a restaurant")
     
@@ -48,6 +50,8 @@ def search_address_food_inspections(name: str = None, address: str = None, coord
         response = requests.get(url)
         if response.status_code == 200:
             inspections = response.json()
+            if write_results:
+                write_results_file(inspections, outputname="food_inspections")
 
             # Format as string summary to make it easier for the LLM to understand
             summary = f"Found {len(inspections)} inspections for {address_or_name}:\n\n"
@@ -69,7 +73,7 @@ def search_address_food_inspections(name: str = None, address: str = None, coord
     except Exception as e:
         return f"Error: {e}"
     
-def search_coordinates_food_inspections(coordinate_boundaries: dict, type: str=None, start_date: str = None, end_date: str = None
+def search_coordinates_food_inspections(coordinate_boundaries: dict, type: str=None, start_date: str = None, end_date: str = None, write_results: bool = False
 ) -> str:
     """Search for any results of recent health department inspections of restaurants within the bounds of a geocoordinate range.
 
@@ -78,11 +82,12 @@ def search_coordinates_food_inspections(coordinate_boundaries: dict, type: str=N
         start_date: Optional start date in YYYY-MM-DD format (e.g., '2024-01-01')
         end_date: Optional end date in YYYY-MM-DD format (e.g., '2024-12-31')
         type: Optional, indicate the type of results desired. Options: "Fail", "Pass"
+        write_results: Optional, set to True when the user wants the full results saved to a CSV file.
 
     Returns:
         A text summary including: details and date.
     """
-    
+
     where_clause = f"latitude%20between%20{coordinate_boundaries['south']}%20and%20{coordinate_boundaries['north']}%20AND%20longitude%20between%20{coordinate_boundaries['west']}%20and%20{coordinate_boundaries['east']}"
         
     if start_date and end_date:
@@ -102,6 +107,8 @@ def search_coordinates_food_inspections(coordinate_boundaries: dict, type: str=N
         response = requests.get(url)
         if response.status_code == 200:
             inspections = response.json()
+            if write_results:
+                write_results_file(inspections, outputname="food_inspections")
 
             # Format as string summary to make it easier for the LLM to understand
             summary = f"Found {len(inspections)} inspections:\n\n"

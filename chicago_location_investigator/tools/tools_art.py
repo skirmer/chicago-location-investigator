@@ -3,19 +3,21 @@ import requests
 from datetime import datetime
 import os
 from dotenv import load_dotenv
+from .write_results import write_results_file
 
 load_dotenv()
 OPEN_DATA_APP_TOKEN = os.getenv("OPEN_DATA_APP_TOKEN")
 
 
 
-def search_coordinates_murals(coordinate_boundaries:dict, start_date:str = None,  end_date: str = None):
+def search_coordinates_murals(coordinate_boundaries:dict, start_date:str = None,  end_date: str = None, write_results: bool = False):
     """Search for public murals within the bounds of a set of geocoordinates (north, south, east, and west) with optional date filtering on the date the work was created.
 
     Args:
         coordinate_boundaries: The dict of the coordinate boundaries in format {"north":north_bound, "south":south_bound, "east":east_bound, "west": west_bound}
         start_date: Optional start date in YYYY-MM-DD format (e.g., '2024-01-01')
         end_date: Optional end date in YYYY-MM-DD format (e.g., '2024-12-31')
+        write_results: Optional, set to True when the user wants the full results saved to a CSV file.
 
     Returns:
         A text summary including: artist name/credit, artwork title, year installed, medium, and street address
@@ -39,6 +41,8 @@ def search_coordinates_murals(coordinate_boundaries:dict, start_date:str = None,
         response = requests.get(url)
         if response.status_code == 200:
             murals = response.json()
+            if write_results:
+                write_results_file(murals, outputname="murals")
 
             if not murals:
                 return f"No murals found at {coordinate_boundaries} during date range selected."
