@@ -3,7 +3,7 @@ import requests
 from datetime import datetime
 import os
 from dotenv import load_dotenv
-from tools.write_results import write_results_file
+from .write_results import write_results_file
 
 load_dotenv()
 OPEN_DATA_APP_TOKEN = os.getenv("OPEN_DATA_APP_TOKEN")

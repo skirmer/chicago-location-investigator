@@ -297,3 +297,179 @@ def test_get_food_details_coords(mock_get):
 
     assert "NEW CONSTRUCTION" in result
     assert "PERMIT" in result
+
+
+#================================================
+# Tests for Car Crash tools
+#================================================
+MOCK_CRASH_RESPONSE = [
+    {
+        "address": "1601 W CHICAGO AVE",
+        "crash_type": "INJURY AND / OR TOW DUE TO CRASH",
+        "weather_condition": "CLEAR",
+        "crash_date": "2025-06-01T10:00:00.000",
+        "injuries_total": "2",
+        "street_no": "1601",
+        "street_direction": "W",
+        "street_name": "CHICAGO AVE",
+    }
+]
+
+
+@patch("chicago_location_investigator.tools.tools_crash.requests.get")
+def test_get_crash_address(mock_get):
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = MOCK_CRASH_RESPONSE
+    mock_get.return_value = mock_response
+
+    from chicago_location_investigator.tools.tools_crash import search_address_crash
+
+    result = search_address_crash(address="1601 W CHICAGO AVE")
+
+    assert "INJURY AND / OR TOW" in result
+    assert "CLEAR" in result
+
+
+@patch("chicago_location_investigator.tools.tools_crash.requests.get")
+def test_get_crash_coords(mock_get):
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = MOCK_CRASH_RESPONSE
+    mock_get.return_value = mock_response
+
+    from chicago_location_investigator.tools.tools_crash import search_coordinates_crash
+
+    result = search_coordinates_crash(
+        coordinate_boundaries={"north": 41.9, "south": 41.8, "east": -87.7, "west": -87.6}
+    )
+
+    assert "INJURY AND / OR TOW" in result
+    assert "CHICAGO AVE" in result
+
+
+def test_search_address_crash_missing_args():
+    from chicago_location_investigator.tools.tools_crash import search_address_crash
+
+    with pytest.raises(Exception) as excinfo:
+        search_address_crash()
+
+    assert "Either coordinates or address is necessary" in str(excinfo.value)
+
+
+#================================================
+# Tests for the write_results CSV export path
+#================================================
+@patch("chicago_location_investigator.tools.tools_crash.write_results_file")
+@patch("chicago_location_investigator.tools.tools_crash.requests.get")
+def test_write_results_true_exports(mock_get, mock_write):
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = MOCK_CRASH_RESPONSE
+    mock_get.return_value = mock_response
+
+    from chicago_location_investigator.tools.tools_crash import search_coordinates_crash
+
+    search_coordinates_crash(
+        coordinate_boundaries={"north": 41.9, "south": 41.8, "east": -87.7, "west": -87.6},
+        write_results=True,
+    )
+
+    mock_write.assert_called_once_with(MOCK_CRASH_RESPONSE, outputname="crashes")
+
+
+@patch("chicago_location_investigator.tools.tools_crash.write_results_file")
+@patch("chicago_location_investigator.tools.tools_crash.requests.get")
+def test_write_results_defaults_off(mock_get, mock_write):
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = MOCK_CRASH_RESPONSE
+    mock_get.return_value = mock_response
+
+    from chicago_location_investigator.tools.tools_crash import search_coordinates_crash
+
+    search_coordinates_crash(
+        coordinate_boundaries={"north": 41.9, "south": 41.8, "east": -87.7, "west": -87.6}
+    )
+
+    mock_write.assert_not_called()
+
+
+#================================================
+# Tests for Ward lookup tool
+#================================================
+@patch("chicago_location_investigator.tools.tools_wards.requests.get")
+def test_search_ward_for_point(mock_get):
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = [{"ward": "27"}]
+    mock_get.return_value = mock_response
+
+    from chicago_location_investigator.tools.tools_wards import search_ward_for_point
+
+    result = search_ward_for_point(latitude=41.8907, longitude=-87.6743)
+
+    assert "Ward 27" in result
+
+
+@patch("chicago_location_investigator.tools.tools_wards.requests.get")
+def test_search_ward_for_point_lon_lat_order(mock_get):
+    """The WKT point must be POINT(longitude latitude) - longitude first."""
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = [{"ward": "27"}]
+    mock_get.return_value = mock_response
+
+    from chicago_location_investigator.tools.tools_wards import search_ward_for_point
+
+    search_ward_for_point(latitude=41.8907, longitude=-87.6743)
+
+    called_url = mock_get.call_args_list[0][0][0]
+    assert "POINT (-87.6743 41.8907)" in called_url
+
+
+@patch("chicago_location_investigator.tools.tools_wards.requests.get")
+def test_search_ward_for_point_none(mock_get):
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = []
+    mock_get.return_value = mock_response
+
+    from chicago_location_investigator.tools.tools_wards import search_ward_for_point
+
+    result = search_ward_for_point(latitude=0.0, longitude=0.0)
+
+    assert "No ward found" in result
+
+
+#================================================
+# Tests for intersection geocoding (ArcGIS)
+#================================================
+@patch("chicago_location_investigator.tools.tools_geocoding.ArcGIS")
+def test_geocode_intersection(mock_arcgis):
+    from chicago_location_investigator.tools.tools_geocoding import geocode_intersection, geocode_cache
+
+    # clear the disk cache so the mocked geocoder is actually invoked (not a cached hit)
+    geocode_cache.clear()
+
+    mock_loc = MagicMock()
+    mock_loc.latitude = 41.8807
+    mock_loc.longitude = -87.6277
+    mock_arcgis.return_value.geocode.return_value = mock_loc
+
+    result = geocode_intersection("MONROE", "STATE")
+
+    assert result == (41.8807, -87.6277)
+
+
+@patch("chicago_location_investigator.tools.tools_geocoding.ArcGIS")
+def test_geocode_intersection_not_found(mock_arcgis):
+    from chicago_location_investigator.tools.tools_geocoding import geocode_intersection, geocode_cache
+
+    geocode_cache.clear()
+
+    mock_arcgis.return_value.geocode.return_value = None
+
+    result = geocode_intersection("NOWHERE", "NOPLACE")
+
+    assert "Could not geocode" in result
