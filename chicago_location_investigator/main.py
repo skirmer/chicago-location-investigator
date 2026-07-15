@@ -3,7 +3,7 @@
 from langchain.agents import create_agent
 import os
 
-from tools.tools_geocoding import geocode_address, get_proximity_to_coords
+from tools.tools_geocoding import geocode_address, get_proximity_to_coords, geocode_intersection
 
 from tools.tools_violations import search_address_violations, get_violation_details, search_coordinates_violations
 
@@ -27,7 +27,7 @@ OPEN_DATA_APP_TOKEN = os.getenv("OPEN_DATA_APP_TOKEN")
 def setup(model):
     agent = create_agent(
         model=model,
-        tools=[search_address_violations, get_violation_details, search_address_active_building_permits, search_address_food_inspections, geocode_address, get_proximity_to_coords, search_coordinates_violations, search_coordinates_active_building_permits, search_coordinates_food_inspections, search_coordinates_murals, search_coordinates_crash, search_ward_for_point],
+        tools=[search_address_violations, get_violation_details, search_address_active_building_permits, search_address_food_inspections, geocode_address, get_proximity_to_coords, search_coordinates_violations, search_coordinates_active_building_permits, search_coordinates_food_inspections, search_coordinates_murals, search_coordinates_crash, search_ward_for_point, geocode_intersection],
         system_prompt=f"""You are a research assistant helping users find information about locations in Chicago, Illinois. They will submit an address, and possibly a date or date range to look for.
 
     Today's date is {date.today().isoformat()}. Use it to interpret any relative dates or date ranges the user gives (eg, "in the last 6 months" or "since June"). Never search for records dated in the future, and do not search further back than the user has asked for.
@@ -36,17 +36,18 @@ def setup(model):
 
     Available tools:
     1. geocode_address - If the question involves looking around the vicinity of an address, not the specific address itself, geocode that address to get coordinates.
-    2. get_proximity_to_coords - This function takes in coordinates representing an address and calculates the north, south, east, and west bounds for the requested radius. Radius must be provided in miles.
-    3. search_address_violations - Get building code violations for an exact address with optional date filtering (start_date, end_date, or days parameters)
-    4. get_violation_details - Get detailed info about a specific building code violation number. Submit one violation number at a time with argument "violation_id_number".
-    5. search_address_active_building_permits - Get a listing of any active building permits for an address.
-    6. search_coordinates_active_building_permits - Get a listing of any active building permits found within coordinate boundaries.
-    7. search_address_food_inspections - Get a listing of health department inspections for restaurants or food services. Accepts name and/or address.
-    8. search_coordinates_food_inspections - Get a listing of health department inspections for restaurants or food services found within coordinate boundaries.
-    9. search_coordinates_violations - Get a listing of building code violations within coordinate boundaries.
-    10. search_coordinates_murals - Get a listing of public art murals on buildings within coordinate boundaries.
-    11. search_coordinates_crash - Get a listing of car crashes that occurred within coordinate boundaries.
-    12. search_ward_for_point - Given a coordinate point, identify what Chicago city ward it falls into. 
+    2. geocode_intersection - If the question involves looking around the vicinity of a cross-streets or corner, geocode the street pair crossing to get coordinates.
+    3. get_proximity_to_coords - This function takes in coordinates representing an address and calculates the north, south, east, and west bounds for the requested radius. Radius must be provided in miles.
+    4. search_address_violations - Get building code violations for an exact address with optional date filtering (start_date, end_date, or days parameters)
+    5. get_violation_details - Get detailed info about a specific building code violation number. Submit one violation number at a time with argument "violation_id_number".
+    6. search_address_active_building_permits - Get a listing of any active building permits for an address.
+    7. search_coordinates_active_building_permits - Get a listing of any active building permits found within coordinate boundaries.
+    8. search_address_food_inspections - Get a listing of health department inspections for restaurants or food services. Accepts name and/or address.
+    9. search_coordinates_food_inspections - Get a listing of health department inspections for restaurants or food services found within coordinate boundaries.
+    10. search_coordinates_violations - Get a listing of building code violations within coordinate boundaries.
+    11. search_coordinates_murals - Get a listing of public art murals on buildings within coordinate boundaries.
+    12. search_coordinates_crash - Get a listing of car crashes that occurred within coordinate boundaries.
+    13. search_ward_for_point - Given a coordinate point, identify what Chicago city ward it falls into. 
 
     Use multiple tools when helpful to provide comprehensive answers. Do not ask follow up questions or offer to do more. If results had to be truncated due to length, let the user know.""",
     )
