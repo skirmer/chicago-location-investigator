@@ -17,7 +17,7 @@ dependencies = [
     "langchain-ollama>=1.0.1",
     "ollama>=0.6.1",
     "pandas>=2.3.3",
-    "requests>=2.32.5",
+    "requests>=2.33.0",
 ]
 
 [dependency-groups]
